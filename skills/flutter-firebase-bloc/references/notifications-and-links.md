@@ -50,7 +50,8 @@ class LocalNotificationService {
         requestSoundPermission: false,
       ),
     );
-    await _plugin.initialize(initSettings, onDidReceiveNotificationResponse: _onTap);
+    // flutter_local_notifications >= 20: named parameters
+    await _plugin.initialize(settings: initSettings, onDidReceiveNotificationResponse: _onTap);
     await NotificationChannels.register(_plugin);
   }
 
@@ -73,7 +74,7 @@ class LocalNotificationService {
       ),
       iOS: const DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
     );
-    await _plugin.show(id, title, body, details, payload: payload);
+    await _plugin.show(id: id, title: title, body: body, notificationDetails: details, payload: payload);
   }
 
   void _onTap(NotificationResponse response) {
@@ -99,6 +100,8 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  late final StreamSubscription<AppFailure> _writeErrorSub;
   late final AuthBloc _authBloc = sl<AuthBloc>();
   late final FeatureFlagsCubit _flags = sl<FeatureFlagsCubit>();
   late final ThemeCubit _themeCubit = sl<ThemeCubit>();
@@ -110,7 +113,29 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     AppNavigator.router = _router;
+    _writeErrorSub = sl<WriteErrorBus>().stream.listen(_showWriteError);
     unawaited(_openFromTerminatedNotification());
+  }
+
+  /// Offline-first writes rejected by the server (rules / App Check) surface here.
+  void _showWriteError(AppFailure failure) {
+    final messenger = _messengerKey.currentState;
+    final ctx = _messengerKey.currentContext;
+    if (messenger == null || ctx == null) return;
+    final cs = Theme.of(ctx).colorScheme;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(ctx).errorWriteRejected, style: TextStyle(color: cs.onError)),
+        backgroundColor: cs.error,
+        behavior: SnackBarBehavior.floating,
+      ));
+  }
+
+  @override
+  void dispose() {
+    unawaited(_writeErrorSub.cancel());
+    super.dispose();
   }
 
   Future<void> _openFromTerminatedNotification() async {
@@ -142,6 +167,7 @@ class _AppState extends State<App> {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: _router,
+            scaffoldMessengerKey: _messengerKey,
             builder: (context, child) {
               final app = Column(children: [const OfflineBanner(), Expanded(child: child!)]);
               return AppConfig.instance.isProd
@@ -205,7 +231,7 @@ class FcmService {
     final n = m.notification;
     if (n == null || kIsWeb) return;
     await _local.show(
-      id: m.hashCode,
+      id: (m.messageId ?? '${m.sentTime}').hashCode & 0x7fffffff, // stable 31-bit id
       title: n.title ?? '',
       body: n.body ?? '',
       payload: jsonEncode(m.data),
@@ -224,13 +250,28 @@ class FcmService {
         'lastTokenUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+  /// Call BEFORE signing out (the write needs auth). Best effort: never block sign-out.
   Future<void> removeToken(String uid) async {
-    final t = await _messaging.getToken();
-    if (t == null) return;
-    await _firestore.collection('users').doc(uid).update({
-      'fcmTokens': FieldValue.arrayRemove([t]),
-    });
-    await _messaging.deleteToken();
+    try {
+      final t = await _messaging.getToken(vapidKey: kIsWeb ? AppConfig.instance.webVapidKey : null);
+      if (t != null) {
+        await _firestore.collection('users').doc(uid).update({
+          'fcmTokens': FieldValue.arrayRemove([t]),
+        }).timeout(const Duration(seconds: 5));
+      }
+    } catch (e, s) {
+      AppLogger.error('removeToken failed', error: e, stack: s);
+    }
+    await deleteLocalToken();
+  }
+
+  /// After account deletion the user doc is gone; only invalidate the device token.
+  Future<void> deleteLocalToken() async {
+    try {
+      await _messaging.deleteToken();
+    } catch (e, s) {
+      AppLogger.error('deleteToken failed', error: e, stack: s);
+    }
   }
 
   Future<void> clearBadge() async {
@@ -319,9 +360,9 @@ BlocBuilder<NotificationsBloc, NotificationsState>(
 
 ## 4. Cloud Functions v2 (`firebase/functions/src/*`) + Web Service Worker
 ```javascript
-// web/firebase-messaging-sw.js
-importScripts('https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js');
+// web/firebase-messaging-sw.js (keep the SDK version in sync with Flutter web's Firebase JS SDK)
+importScripts('https://www.gstatic.com/firebasejs/13.4.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/13.4.0/firebase-messaging-compat.js');
 firebase.initializeApp({ apiKey: '...', projectId: '...', messagingSenderId: '...', appId: '...' });
 firebase.messaging().onBackgroundMessage((p) => {
   if (p.notification?.title) self.registration.showNotification(p.notification.title, { body: p.notification.body, data: p.data });
@@ -329,53 +370,87 @@ firebase.messaging().onBackgroundMessage((p) => {
 ```
 
 ```typescript
-// firebase/functions/src/index.ts
-import * as admin from 'firebase-admin';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+// firebase/functions/src/index.ts — firebase-functions ^7.4 (2nd gen) + firebase-admin ^14.5 (modular API)
+import { initializeApp } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
+import { getStorage } from 'firebase-admin/storage';
+import { onCall, HttpsError } from 'firebase-functions/https';
+import { onDocumentWritten } from 'firebase-functions/firestore';
+import { onUserDeleted } from 'firebase-functions/identity';
+import { logger } from 'firebase-functions';
 
-admin.initializeApp();
+initializeApp();
+const db = getFirestore();
 
+// Called by BoardsRemoteDatasource.deleteBoard (client batches can't see uncached sub-docs offline).
 export const deleteBoardRecursive = onCall({ enforceAppCheck: true }, async (req) => {
   const uid = req.auth?.uid;
-  const boardId = req.data?.boardId as string | undefined;
+  const boardId = req.data?.boardId;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required');
-  if (!boardId) throw new HttpsError('invalid-argument', 'boardId required');
-
-  const ref = admin.firestore().collection('boards').doc(boardId);
+  if (typeof boardId !== 'string' || boardId.length === 0 || boardId.length > 128) {
+    throw new HttpsError('invalid-argument', 'boardId required');
+  }
+  const ref = db.collection('boards').doc(boardId);
   const snap = await ref.get();
-  if (!snap.exists || snap.data()?.ownerId !== uid) {
+  if (!snap.exists || snap.get('ownerId') !== uid) {
     throw new HttpsError('permission-denied', 'Owner only');
   }
-  await admin.firestore().recursiveDelete(ref);
+  await db.recursiveDelete(ref);
+  await getStorage().bucket().deleteFiles({ prefix: `boards/${boardId}/` });
   return { deleted: true };
+});
+
+// Account deletion (App Store 5.1.1(v) / Google Play data-deletion policy): erase everything
+// the user owns when `user.delete()` succeeds on the client.
+export const cleanupDeletedUser = onUserDeleted({}, async (event) => {
+  const uid = event.data.uid;
+  const bulk = db.bulkWriter();
+
+  // 1. Boards the user owns: delete recursively (cards, activity, attachments).
+  const owned = await db.collection('boards').where('ownerId', '==', uid).get();
+  for (const board of owned.docs) {
+    await db.recursiveDelete(board.ref, bulk);
+    await getStorage().bucket().deleteFiles({ prefix: `boards/${board.id}/` });
+  }
+  // 2. Boards shared with the user: remove membership only.
+  const shared = await db.collection('boards').where('memberIds', 'array-contains', uid).get();
+  for (const board of shared.docs) {
+    if (board.get('ownerId') !== uid) bulk.update(board.ref, { memberIds: FieldValue.arrayRemove(uid) });
+  }
+  // 3. Personal documents.
+  const notifs = await db.collection('notifications').where('userId', '==', uid).get();
+  notifs.docs.forEach((d) => bulk.delete(d.ref));
+  bulk.delete(db.doc(`publicProfiles/${uid}`));
+  bulk.delete(db.doc(`users/${uid}`));
+  await bulk.close();
+  await getStorage().bucket().deleteFiles({ prefix: `users/${uid}/` });
+  logger.info('User data erased', { uid, ownedBoards: owned.size });
 });
 
 export const onCardAssigned = onDocumentWritten('boards/{boardId}/cards/{cardId}', async (event) => {
   const before = event.data?.before.data();
   const after = event.data?.after.data();
-  if (!after || !after.assigneeId || before?.assigneeId === after.assigneeId) return null;
+  if (!after || !after.assigneeId || before?.assigneeId === after.assigneeId) return;
 
   const assigneeId = after.assigneeId as string;
   const { boardId, cardId } = event.params;
+  const title = 'New card assigned to you';
+  const body = typeof after.title === 'string' ? after.title : 'You have a new task';
+  const data = { type: 'card_assigned', id: cardId, boardId }; // FCM data values must be strings
 
-  await admin.firestore().collection('notifications').add({
-    userId: assigneeId,
-    title: 'New card assigned to you',
-    body: after.title ?? 'You have a new task',
-    data: { type: 'card_assigned', id: cardId, boardId },
-    isRead: false,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  await db.collection('notifications').add({
+    userId: assigneeId, title, body, data, isRead: false, createdAt: FieldValue.serverTimestamp(),
   });
 
-  const userDoc = await admin.firestore().collection('users').doc(assigneeId).get();
-  const tokens: string[] = userDoc.data()?.fcmTokens ?? [];
-  if (!tokens.length) return null;
+  const userDoc = await db.collection('users').doc(assigneeId).get();
+  const tokens: string[] = userDoc.get('fcmTokens') ?? [];
+  if (!tokens.length) return;
 
-  const res = await admin.messaging().sendEachForMulticast({
+  const res = await getMessaging().sendEachForMulticast({
     tokens,
-    notification: { title: 'New card assigned to you', body: after.title ?? 'You have a new task' },
-    data: { type: 'card_assigned', id: cardId, boardId },
+    notification: { title, body },
+    data,
     android: { priority: 'high', notification: { channelId: 'high_importance_channel', priority: 'max', sound: 'default' } },
     apns: { payload: { aps: { sound: 'default', badge: 1, contentAvailable: true } } },
   });
@@ -384,21 +459,11 @@ export const onCardAssigned = onDocumentWritten('boards/{boardId}/cards/{cardId}
     .map((r, i) => ({ r, t: tokens[i] }))
     .filter(({ r }) => !r.success && ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'].includes(r.error?.code ?? ''))
     .map(({ t }) => t);
-  if (stale.length) {
-    await userDoc.ref.update({ fcmTokens: admin.firestore.FieldValue.arrayRemove(...stale) });
-  }
-  return { sent: res.successCount, removed: stale.length };
+  if (stale.length) await userDoc.ref.update({ fcmTokens: FieldValue.arrayRemove(...stale) });
 });
 
-export async function notifyBoardMembers(boardId: string, title: string, body: string, data: Record<string, string>) {
-  await admin.messaging().send({
-    topic: `board_${boardId}`,
-    notification: { title, body },
-    data,
-    android: { priority: 'high' },
-    apns: { payload: { aps: { sound: 'default', contentAvailable: true } } },
-  });
-}
+// Do NOT fan out private board updates through FCM topics: any client can subscribe to
+// any topic name. Send to the members' tokens (as above) instead.
 ```
 
 ## 5. Complete `GoRouter` (`app_router.dart`, `route_names.dart`, `stream_listenable.dart`, `app_navigator.dart`) + Universal/App Links
@@ -440,6 +505,13 @@ GoRouter createAppRouter({required AuthBloc authBloc, required FeatureFlagsCubit
     refreshListenable: Listenable.merge([StreamListenable(authBloc.stream), StreamListenable(flags.stream)]),
     redirect: (context, state) {
       final loc = state.matchedLocation;
+      // Keep the original deep link (notification / universal link) through splash & login.
+      String withFrom(String target) {
+        final from = state.uri.queryParameters['from'] ??
+            (_isPublic(loc) ? null : state.uri.toString());
+        return from == null ? target : Uri(path: target, queryParameters: {'from': from}).toString();
+      }
+
       final f = flags.state;
       if (f.maintenanceMode) return loc == RouteNames.maintenance ? null : RouteNames.maintenance;
       if (isBelowMinVersion(f.minSupportedVersion)) {
@@ -449,17 +521,19 @@ GoRouter createAppRouter({required AuthBloc authBloc, required FeatureFlagsCubit
 
       final authState = authBloc.state;
       if (authState.status == AuthStatus.unknown) {
-        return loc == RouteNames.splash ? null : RouteNames.splash;
+        return loc == RouteNames.splash ? null : withFrom(RouteNames.splash);
       }
-      final isAuth = authState.status == AuthStatus.authenticated;
+      // `user != null`, not `status == authenticated`: loading/failure states during
+      // delete-account or re-auth keep the user, so they must not bounce to welcome.
+      final isAuth = authState.user != null;
       final onAuthRoute = loc.startsWith(RouteNames.authPrefix);
 
-      if (!isAuth) return onAuthRoute ? null : RouteNames.welcome;
-      if (authState.user?.needsOnboarding ?? false) {
-        return loc == RouteNames.onboarding ? null : RouteNames.onboarding;
+      if (!isAuth) return onAuthRoute ? null : withFrom(RouteNames.welcome);
+      if (authState.user!.needsOnboarding) {
+        return loc == RouteNames.onboarding ? null : withFrom(RouteNames.onboarding);
       }
       if (loc == RouteNames.splash || onAuthRoute || loc == RouteNames.onboarding) {
-        return RouteNames.home;
+        return _safeFrom(state.uri.queryParameters['from']) ?? RouteNames.home;
       }
       return null;
     },
@@ -477,6 +551,16 @@ GoRouter createAppRouter({required AuthBloc authBloc, required FeatureFlagsCubit
       GoRoute(path: RouteNames.updateRequired, builder: (_, __) => const UpdateRequiredPage()),
     ],
   );
+}
+
+bool _isPublic(String loc) =>
+    loc == RouteNames.splash || loc == RouteNames.onboarding || loc.startsWith(RouteNames.authPrefix) ||
+    loc == RouteNames.maintenance || loc == RouteNames.updateRequired;
+
+/// Only same-app relative paths: blocks open redirects like `?from=https://evil.com`.
+String? _safeFrom(String? from) {
+  if (from == null || !from.startsWith('/') || from.startsWith('//')) return null;
+  return _isPublic(Uri.parse(from).path) ? null : from;
 }
 ```
 - Universal Links / App Links: Place `public/.well-known/assetlinks.json` (Android SHA-256) and `public/.well-known/apple-app-site-association` (iOS Team ID + `/board/*`), and enable `FlutterDeepLinkingEnabled = true` in `ios/Runner/Info.plist`.

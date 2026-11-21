@@ -11,5 +11,11 @@
   "authEmailInUse": "An account already exists for this email.",
   "authWeakPassword": "Please choose a stronger password.",
   "authTooManyRequests": "Too many attempts. Please try again later.",
-  "authUserDisabled": "This account has been disabled."
+  "authUserDisabled": "This account has been disabled.",
+  "authRequiresRecentLogin": "For your security, please sign in again to continue.",
+  "errorWriteRejected": "Your last change could not be saved and was undone.",
+  "validationRequired": "This field is required.",
+  "validationTooLong": "This text is too long.",
+  "validationInvalidEmail": "Please enter a valid email address.",
+  "validationInvalidPhone": "Please enter a valid phone number."
 }

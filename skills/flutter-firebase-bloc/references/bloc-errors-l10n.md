@@ -54,10 +54,13 @@ class DeleteBoardRequested extends BoardsEvent {
   List<Object?> get props => [boardId];
 }
 
+// import 'package:bloc_concurrency/bloc_concurrency.dart';
 @injectable
 class BoardsBloc extends Bloc<BoardsEvent, BoardsState> {
   BoardsBloc(this._watchBoards, this._createBoard, this._deleteBoard) : super(const BoardsState()) {
-    on<WatchBoardsStarted>(_onWatchStarted);
+    // restartable(): a new WatchBoardsStarted cancels the previous emit.forEach subscription.
+    // Without it, every refresh would add one more live Firestore listener (leak).
+    on<WatchBoardsStarted>(_onWatchStarted, transformer: restartable());
     on<BoardsRefreshed>(_onRefreshed);
     on<CreateBoardRequested>(_onCreateBoard);
     on<DeleteBoardRequested>(_onDeleteBoard);
@@ -71,16 +74,26 @@ class BoardsBloc extends Bloc<BoardsEvent, BoardsState> {
     _userId = e.userId;
     emit(state.copyWith(status: BoardsStatus.loading));
     await emit.forEach(
-      _watchBoards(e.userId),
+      _watchBoards(e.userId), // repository maps stream errors to Left(AppFailure)
       onData: (result) => result.fold(
+        // boards are NOT cleared: a failed refresh keeps the last data on screen
         (f) => state.copyWith(status: BoardsStatus.failure, failure: () => f),
         (b) => state.copyWith(status: BoardsStatus.success, boards: b, failure: () => null),
+      ),
+      // Safety net: never leave the UI stuck in `loading` if something unmapped escapes.
+      onError: (_, __) => state.copyWith(
+        status: BoardsStatus.failure,
+        failure: () => const UnknownFailure('watch-boards'),
       ),
     );
   }
 
-  Future<void> _onRefreshed(BoardsRefreshed _, Emitter<BoardsState> emit) =>
-      _userId == null ? Future.value() : _onWatchStarted(WatchBoardsStarted(_userId!), emit);
+  // Re-dispatch instead of calling the handler directly: the event goes through
+  // the restartable() transformer, which cancels the old listener first.
+  void _onRefreshed(BoardsRefreshed _, Emitter<BoardsState> emit) {
+    final uid = _userId;
+    if (uid != null) add(WatchBoardsStarted(uid));
+  }
 
   Future<void> _onCreateBoard(CreateBoardRequested e, Emitter<BoardsState> emit) async {
     final res = await _createBoard(CreateBoardParams(title: e.title, color: e.color, userId: e.userId));
@@ -153,12 +166,23 @@ final class NotFoundFailure extends AppFailure { const NotFoundFailure() : super
 final class CancelledFailure extends AppFailure { const CancelledFailure() : super('cancelled'); }
 final class CacheFailure extends AppFailure { const CacheFailure(super.message); }
 final class FirebaseFailure extends AppFailure { const FirebaseFailure(super.message); }
-final class ValidationFailure extends AppFailure { const ValidationFailure(super.message); }
+
+/// Validation carries a CODE, never display text: the UI localizes it.
+enum ValidationCode { required, tooLong, invalidEmail, invalidPhone }
+final class ValidationFailure extends AppFailure {
+  const ValidationFailure(this.code) : super('validation');
+  final ValidationCode code;
+  @override
+  List<Object?> get props => [message, code];
+}
 final class AuthFailure extends AppFailure {
   const AuthFailure(this.code) : super('auth/$code');
   final String code;
 }
 final class UnknownFailure extends AppFailure { const UnknownFailure(super.message); }
+
+/// Thrown by datasources when the user dismisses a sign-in sheet; mapped to CancelledFailure.
+final class CancelledException implements Exception { const CancelledException(); }
 
 // app_logger.dart
 abstract final class AppLogger {
@@ -220,13 +244,14 @@ extension FirebaseAuthExceptionX on FirebaseAuthException {
   AppFailure toFailure() => switch (code) {
         'invalid-credential' || 'wrong-password' || 'user-not-found' => const AuthFailure('invalid-credential'),
         'network-request-failed' => const NetworkFailure(),
+        'web-context-cancelled' || 'popup-closed-by-user' => const CancelledFailure(),
         _ => AuthFailure(code),
       };
 }
 extension FirebaseExceptionX on FirebaseException {
   AppFailure toFailure() => switch (code) {
         'unavailable' || 'deadline-exceeded' => const NetworkFailure(),
-        'permission-denied' => const PermissionFailure(),
+        'permission-denied' || 'unauthenticated' => const PermissionFailure(), // incl. callable Functions
         'not-found' => const NotFoundFailure(),
         _ => FirebaseFailure(message ?? code),
       };
@@ -241,13 +266,19 @@ extension AppFailureL10n on AppFailure {
       PermissionFailure() => l.errorNoPermission,
       NotFoundFailure() => l.errorNotFound,
       CancelledFailure() => '',
-      ValidationFailure(:final message) => message,
+      ValidationFailure(:final code) => switch (code) {
+          ValidationCode.required => l.validationRequired,
+          ValidationCode.tooLong => l.validationTooLong,
+          ValidationCode.invalidEmail => l.validationInvalidEmail,
+          ValidationCode.invalidPhone => l.validationInvalidPhone,
+        },
       AuthFailure(:final code) => switch (code) {
           'invalid-credential' => l.authInvalidCredential,
           'email-already-in-use' => l.authEmailInUse,
           'weak-password' => l.authWeakPassword,
           'too-many-requests' => l.authTooManyRequests,
           'user-disabled' => l.authUserDisabled,
+          'requires-recent-login' => l.authRequiresRecentLogin,
           _ => l.errorGeneric,
         },
       FirebaseFailure() || CacheFailure() || UnknownFailure() => l.errorGeneric,
@@ -312,10 +343,13 @@ abstract final class AppSnackBar {
 class FriendlyErrorWidget extends StatelessWidget {
   const FriendlyErrorWidget({super.key});
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-        color: Color(0xFFF5F5F7),
-        child: Center(child: Icon(Icons.error_outline_rounded, size: 40, color: Color(0xFF9E9E9E))),
-      );
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme; // falls back to the default theme above MaterialApp
+    return ColoredBox(
+      color: cs.surfaceContainerHighest,
+      child: Center(child: Icon(Icons.error_outline_rounded, size: 40, color: cs.onSurfaceVariant)),
+    );
+  }
 }
 ```
 
