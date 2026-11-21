@@ -1,0 +1,63 @@
+name: Validate Skill
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate skill structure, manifests, and templates
+        run: |
+          python3 - <<'EOF'
+          import json, os, re
+
+          root = "skills/flutter-firebase-bloc"
+          skill_md = os.path.join(root, "SKILL.md")
+          assert os.path.isfile(skill_md), "Missing SKILL.md"
+
+          with open(skill_md, "r", encoding="utf-8") as f:
+              text = f.read()
+          assert text.startswith("---\n") and "\nname:" in text and "\ndescription:" in text, "Invalid SKILL.md frontmatter"
+
+          expected_refs = [
+              "architecture-and-di.md",
+              "auth-and-security.md",
+              "bloc-errors-l10n.md",
+              "notifications-and-links.md",
+              "flavors-perf-rc-cicd.md",
+          ]
+          for ref in expected_refs:
+              p = os.path.join(root, "references", ref)
+              assert os.path.isfile(p) and os.path.getsize(p) > 5000, f"Reference missing or incomplete: {p}"
+
+          json_files = [
+              ".claude-plugin/marketplace.json",
+              ".claude-plugin/plugin.json",
+              os.path.join(root, "templates/.firebaserc"),
+              os.path.join(root, "templates/app_en.arb"),
+              os.path.join(root, "templates/app_ar.arb"),
+              os.path.join(root, "templates/firebase.json"),
+              os.path.join(root, "templates/firestore.indexes.json"),
+          ]
+          for jf in json_files:
+              with open(jf, "r", encoding="utf-8") as f:
+                  json.load(f)
+
+          with open(os.path.join(root, "templates/app_en.arb"), encoding="utf-8") as f:
+              en_keys = {k for k in json.load(f) if not k.startswith("@")}
+          with open(os.path.join(root, "templates/app_ar.arb"), encoding="utf-8") as f:
+              ar_keys = {k for k in json.load(f) if not k.startswith("@")}
+          assert en_keys == ar_keys, f"ARB key mismatch: {en_keys ^ ar_keys}"
+
+          print("All skill validation checks passed!")
+          EOF

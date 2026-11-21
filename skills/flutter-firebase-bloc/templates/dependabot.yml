@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      firebase:
+        patterns:
+          - "firebase_*"
+          - "cloud_*"
+  - package-ecosystem: npm
+    directory: /firebase/functions
+    schedule:
+      interval: weekly

@@ -1,0 +1,28 @@
+{
+  "name": "flutter-firebase-bloc-marketplace",
+  "owner": {
+    "name": "anwarsafy"
+  },
+  "metadata": {
+    "description": "Production Flutter + Firebase + BLoC AI Agent Skill with Clean Architecture, Offline-First Firestore, Hardened Security Rules, RTL l10n, and CI/CD.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "flutter-firebase-bloc",
+      "source": "./",
+      "description": "Production Flutter + Firebase + BLoC architecture, anti-hacking rules, offline-first writes, single-state BLoCs, flavors, and CI/CD.",
+      "version": "1.0.0",
+      "keywords": [
+        "flutter",
+        "firebase",
+        "bloc",
+        "clean-architecture",
+        "firestore-rules",
+        "security",
+        "rtl",
+        "dart"
+      ]
+    }
+  ]
+}

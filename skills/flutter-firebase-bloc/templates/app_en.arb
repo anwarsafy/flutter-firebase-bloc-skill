@@ -1,0 +1,15 @@
+{
+  "@@locale": "en",
+  "appTitle": "TaskBoard",
+  "offlineBanner": "You are offline. Changes will sync automatically.",
+  "retry": "Retry",
+  "errorNoInternet": "No internet connection. Please check your network and try again.",
+  "errorNoPermission": "You do not have permission to perform this action.",
+  "errorNotFound": "The requested item was not found.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "authInvalidCredential": "Invalid email or password.",
+  "authEmailInUse": "An account already exists for this email.",
+  "authWeakPassword": "Please choose a stronger password.",
+  "authTooManyRequests": "Too many attempts. Please try again later.",
+  "authUserDisabled": "This account has been disabled."
+}

@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flutter + Firebase + BLoC — #1 Production Blueprint &amp; AI Skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #232640;
+    --border: #2e3155;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --code-bg: #0d0f1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+  aside {
+    width: 274px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--border);
+    position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; padding: 20px 0 36px;
+  }
+  .logo { padding: 0 20px 16px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .logo h1 { font-size: 14px; font-weight: 700; color: var(--accent2); line-height: 1.4; }
+  .logo p { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .nav-section { padding: 0 12px; margin-bottom: 10px; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 0 8px; margin-bottom: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; color: var(--text2); transition: all .15s;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(99,102,241,.15); color: var(--accent2); }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .nav-item.active .nav-dot { background: var(--accent); }
+  .nav-badge { margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; background: rgba(99,102,241,.2); color: var(--accent2); }
+  .nav-badge-green { background: rgba(34,197,94,.18); color: var(--green); }
+  main { margin-left: 274px; flex: 1; max-width: calc(100vw - 274px); padding: 44px 52px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .hero {
+    background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(6,182,212,.05));
+    border: 1px solid rgba(99,102,241,.25); border-radius: 16px; padding: 28px 32px; margin-bottom: 32px;
+  }
+  .hero-tag {
+    display: inline-block; font-size: 11px; font-weight: 600; color: var(--accent2);
+    background: rgba(99,102,241,.15); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .hero h2 { font-size: 25px; font-weight: 700; margin-bottom: 8px; }
+  .hero p { color: var(--text2); font-size: 14px; line-height: 1.6; max-width: 720px; }
+  .checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 10px; margin-top: 20px; }
+  .check-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); }
+  .check-icon { color: var(--green); font-size: 14px; flex-shrink: 0; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; margin-top: 24px; text-transform: uppercase; letter-spacing: .06em; }
+  .code-wrap { position: relative; margin-bottom: 22px; }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border: 1px solid var(--border); border-bottom: none;
+    border-radius: 10px 10px 0 0; padding: 8px 16px; gap: 12px;
+  }
+  .code-lang { font-size: 11px; font-weight: 600; color: var(--accent2); text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; }
+  .code-file { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-btn {
+    font-size: 11px; color: var(--text2); background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    cursor: pointer; padding: 3px 10px; border-radius: 5px; flex-shrink: 0; transition: all .15s; font-family: 'Inter', sans-serif;
+  }
+  .copy-btn:hover { background: var(--border); color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 0 0 10px 10px;
+    padding: 18px 20px; overflow-x: auto; font-size: 12.5px; line-height: 1.65; font-family: 'JetBrains Mono', monospace;
+  }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(99,102,241,.12); padding: 1px 5px; border-radius: 4px; color: #c7d2fe; }
+  .kw { color: #c084fc; }
+  .cls { color: #67e8f9; }
+  .fn { color: #fbbf24; }
+  .st { color: #86efac; }
+  .cm { color: #64748b; font-style: italic; }
+  .nu { color: #f97316; }
+  .ty { color: #38bdf8; }
+  .de { color: #818cf8; }
+  .box { border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; font-size: 13px; line-height: 1.65; border-left: 3px solid; }
+  .box-info { background: rgba(6,182,212,.07); border-color: var(--cyan); color: #a5f3fc; }
+  .box-warn { background: rgba(234,179,8,.07); border-color: var(--yellow); color: #fef08a; }
+  .box-tip  { background: rgba(34,197,94,.07); border-color: var(--green); color: #bbf7d0; }
+  .rule-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 13px; }
+  .rule-table th {
+    text-align: left; padding: 10px 14px; font-weight: 600; background: var(--surface2); color: var(--text2);
+    border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  }
+  .rule-table td { padding: 10px 14px; border-bottom: 1px solid rgba(46,49,85,.5); vertical-align: top; line-height: 1.5; }
+  .rule-table tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+  .pill-blue { background: rgba(99,102,241,.15); color: var(--accent2); }
+  .tab-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none;
+    color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
+  }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  @media (max-width: 900px) {
+    aside { width: 210px; }
+    main { margin-left: 210px; padding: 28px 20px; max-width: calc(100vw - 210px); }
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="logo">
+    <h1>Flutter + Firebase<br/>BLoC Blueprint v2</h1>
+    <p>#1 Production Template + AI Skill</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview &amp; Config</div>
+    <button class="nav-item active" onclick="show('overview',this)"><span class="nav-dot"></span> Introduction &amp; Fixes</button>
+    <button class="nav-item" onclick="show('structure',this)"><span class="nav-dot"></span> Canonical Folder Tree</button>
+    <button class="nav-item" onclick="show('pubspec',this)"><span class="nav-dot"></span> pubspec + Lints</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Architecture</div>
+    <button class="nav-item" onclick="show('domain',this)"><span class="nav-dot"></span> Domain Layer</button>
+    <button class="nav-item" onclick="show('data',this)"><span class="nav-dot"></span> Data + Pagination + Storage</button>
+    <button class="nav-item" onclick="show('bloc',this)"><span class="nav-dot"></span> BLoC Layer <span class="nav-badge">State</span></button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Core</div>
+    <button class="nav-item" onclick="show('di',this)"><span class="nav-dot"></span> DI (GetIt + Injectable)</button>
+    <button class="nav-item" onclick="show('router',this)"><span class="nav-dot"></span> Router + Splash + Links</button>
+    <button class="nav-item" onclick="show('theme',this)"><span class="nav-dot"></span> Theme + Adaptive + l10n/RTL</button>
+    <button class="nav-item" onclick="show('errors',this)"><span class="nav-dot"></span> Errors + Global Handlers</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Firebase &amp; Auth</div>
+    <button class="nav-item" onclick="show('auth',this)"><span class="nav-dot"></span> Full Auth + Delete Account</button>
+    <button class="nav-item" onclick="show('firestore',this)"><span class="nav-dot"></span> Rules + Indexes + Functions</button>
+    <button class="nav-item" onclick="show('notifications',this)"><span class="nav-dot"></span> Notifications (Mobile + Web)</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Production</div>
+    <button class="nav-item" onclick="show('offline',this)"><span class="nav-dot"></span> Offline-First</button>
+    <button class="nav-item" onclick="show('flavors',this)"><span class="nav-dot"></span> Flavors + App Check</button>
+    <button class="nav-item" onclick="show('perf',this)"><span class="nav-dot"></span> Performance</button>
+    <button class="nav-item" onclick="show('remoteconfig',this)"><span class="nav-dot"></span> Remote Config &amp; A/B</button>
+    <button class="nav-item" onclick="show('cicd',this)"><span class="nav-dot"></span> CI/CD + Symbols</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Testing &amp; Skill</div>
+    <button class="nav-item" onclick="show('testing',this)"><span class="nav-dot"></span> Unit / Widget / Integration</button>
+    <button class="nav-item" onclick="show('rules',this)"><span class="nav-dot"></span> Golden Rules <span class="nav-badge">★</span></button>
+    <button class="nav-item" onclick="show('aiskill',this)"><span class="nav-dot"></span> AI Skill Pack <span class="nav-badge nav-badge-green">SKILL</span></button>
+  </div>
+</aside>
+
+<main>
+
+<!-- ═══════════════════ OVERVIEW ═══════════════════ -->
+<div id="overview" class="section active">
+  <div class="hero">
+    <div class="hero-tag">Ultimate Production Blueprint v2</div>
+    <h2>Flutter + Firebase + BLoC — Zero Gaps, Compile-Clean</h2>
+    <p>Every internal contradiction from v1 is resolved, every missing production pillar is implemented, and an AI-ready <code>SKILL.md</code> specification is built in so both engineers and AI agents produce #1-grade code.</p>
+    <div class="checklist">
+      <div class="check-item"><span class="check-icon">✓</span> 100% consistent paths (Tree = Code = CI)</div>
+      <div class="check-item"><span class="check-icon">✓</span> Zero compile bugs (AppLogger, Navigator, DI)</div>
+      <div class="check-item"><span class="check-icon">✓</span> Strict analysis_options.yaml</div>
+      <div class="check-item"><span class="check-icon">✓</span> Full Auth (Google, Apple, OTP, Email, Delete)</div>
+      <div class="check-item"><span class="check-icon">✓</span> AuthStatus.unknown Splash Guard</div>
+      <div class="check-item"><span class="check-icon">✓</span> App Check wired in bootstrap()</div>
+      <div class="check-item"><span class="check-icon">✓</span> Web Push (VAPID + Service Worker)</div>
+      <div class="check-item"><span class="check-icon">✓</span> l10n + Arabic RTL + LocaleCubit</div>
+      <div class="check-item"><span class="check-icon">✓</span> Responsive + AdaptiveScaffold</div>
+      <div class="check-item"><span class="check-icon">✓</span> Cursor Pagination + Storage Uploads</div>
+      <div class="check-item"><span class="check-icon">✓</span> firebase.json + firestore.indexes.json</div>
+      <div class="check-item"><span class="check-icon">✓</span> Crashlytics Dart Symbol Upload in CI/CD</div>
+    </div>
+  </div>
+
+  <h4>What Was Fixed in v2</h4>
+  <table class="rule-table">
+    <tr><th>Defect in v1</th><th>Fix Applied in v2</th></tr>
+    <tr><td><code>AppLogger</code> was static-only, yet injected into <code>FcmService</code></td><td><code>AppLogger</code> is strictly static everywhere; <code>FcmService</code> calls <code>AppLogger.info/error</code> directly</td></tr>
+    <tr><td><code>LocalNotificationService</code> passed <code>String</code> to <code>navigate(Map)</code></td><td>Added <code>NotificationNavigator.navigateFromPayload(String)</code> with safe <code>jsonDecode</code></td></tr>
+    <tr><td><code>sl.$initGetIt(sl)</code> + missing <code>SharedPreferences</code> / <code>PackageInfo</code></td><td>Updated to <code>sl.init()</code> + <code>@preResolve</code> registrations in <code>FirebaseModule</code></td></tr>
+    <tr><td><code>FcmService</code> leaked 3 listeners &amp; had dead duplicate sidebar tab</td><td>Stored &amp; cancelled all <code>StreamSubscription</code>s in <code>dispose()</code>; unified into one section + Web VAPID/SW</td></tr>
+    <tr><td>Router flashed <code>/auth/welcome</code> on cold start</td><td>Added <code>AuthStatus.unknown</code> + <code>/splash</code> + <code>/onboarding</code> guard + full <code>AuthBloc</code></td></tr>
+    <tr><td>CI/CD paths, package IDs, and Crashlytics symbols drifted</td><td>Aligned <code>firebase/</code> &amp; <code>com.example.taskboard</code> everywhere + added symbol upload steps</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════ STRUCTURE ═══════════════════ -->
+<div id="structure" class="section">
+  <div class="hero">
+    <div class="hero-tag">Canonical Architecture</div>
+    <h2>Folder Structure (100% Aligned with Code &amp; CI)</h2>
+    <p>Every single file referenced in Dart code, Firebase config, and GitHub Actions lives at its exact canonical path below.</p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">TREE</span>
+      <span class="code-file">project root</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="cm">my_app/
+├── .fvmrc                                  # Pinned Flutter version for local + CI
+├── .firebaserc                             # dev / staging / prod project aliases
+├── analysis_options.yaml                   # Strict lint rules
+├── l10n.yaml                               # Localization config (EN + AR)
+├── firebase.json                           # Points to firebase/ rules, indexes, functions
+├── pubspec.yaml
+├── .github/
+│   ├── dependabot.yml
+│   └── workflows/                          # ci.yml, deploy-web.yml, deploy-firebase.yml, release-*.yml
+├── firebase/
+│   ├── firestore.rules
+│   ├── firestore.indexes.json              # Composite indexes for queries
+│   ├── storage.rules
+│   └── functions/
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.ts
+│           ├── notifications/
+│           └── triggers/
+├── web/
+│   └── firebase-messaging-sw.js            # Background push handler for Web
+├── lib/
+│   ├── main_dev.dart
+│   ├── main_staging.dart
+│   ├── main_prod.dart
+│   ├── app_config.dart
+│   ├── bootstrap.dart                      # Single startup pipeline
+│   ├── app.dart                            # Root App widget
+│   ├── injection_container.dart
+│   ├── firebase_options_dev.dart
+│   ├── firebase_options_staging.dart
+│   ├── firebase_options_prod.dart
+│   ├── l10n/
+│   │   ├── app_en.arb
+│   │   └── app_ar.arb
+│   ├── core/
+│   │   ├── constants/ (app_spacing.dart, app_border_radius.dart)
+│   │   ├── errors/ (exceptions.dart, failures.dart, exception_mapper.dart, failure_l10n.dart, error_reporter.dart, global_error_handlers.dart)
+│   │   ├── firebase/ (firestore_setup.dart, app_check_setup.dart)
+│   │   ├── l10n/ (locale_cubit.dart)
+│   │   ├── network/ (network_info.dart, connectivity_cubit.dart, perf_interceptor.dart)
+│   │   ├── notifications/ (fcm_background.dart, fcm_service.dart, local_notification_service.dart, notification_channels.dart, notification_navigator.dart)
+│   │   ├── observers/ (app_bloc_observer.dart)
+│   │   ├── performance/ (perf_service.dart)
+│   │   ├── remote_config/ (rc_keys.dart, remote_config_service.dart, feature_flags_cubit.dart, version_gate.dart)
+│   │   ├── router/ (app_router.dart, route_names.dart, stream_listenable.dart, app_navigator.dart)
+│   │   ├── storage/ (storage_service.dart, draft_store.dart)
+│   │   ├── theme/ (app_theme.dart, theme_cubit.dart)
+│   │   ├── usecases/ (usecase.dart)
+│   │   ├── utils/ (app_logger.dart, validators.dart)
+│   │   └── widgets/ (error_view.dart, app_snack_bar.dart, friendly_error_widget.dart, offline_banner.dart)
+│   ├── common/
+│   │   ├── layouts/ (responsive_layout.dart, adaptive_scaffold.dart)
+│   │   └── widgets/ (app_shimmer.dart, app_empty_state.dart)
+│   └── features/
+│       ├── auth/
+│       ├── notifications/
+│       └── &lt;feature&gt;/
+│           ├── data/ (datasources, models, repositories)
+│           ├── domain/ (entities, repositories, usecases)
+│           └── presentation/ (bloc, pages, widgets)
+├── test/ (unit, widget, helpers)
+└── integration_test/</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ PUBSPEC + LINTS ═══════════════════ -->
+<div id="pubspec" class="section">
+  <div class="hero">
+    <div class="hero-tag">Dependencies &amp; Static Analysis</div>
+    <h2>pubspec.yaml + analysis_options.yaml</h2>
+    <p>Complete dependency list (zero omitted packages) paired with strict analyzer enforcement.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'ps-pubspec')">pubspec.yaml</button>
+    <button class="tab" onclick="switchTab(this,'ps-analysis')">analysis_options.yaml</button>
+  </div>
+
+  <div id="ps-pubspec" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML</span>
+        <span class="code-file">pubspec.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">name</span>: my_app
+<span class="kw">description</span>: Flutter + Firebase + BLoC Production App
+<span class="kw">publish_to</span>: none
+<span class="kw">version</span>: 1.0.0+1
+
+<span class="kw">environment</span>:
+  <span class="kw">sdk</span>: <span class="st">"&gt;=3.5.0 &lt;4.0.0"</span>
+
+<span class="kw">dependencies</span>:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  <span class="cm"># ── Firebase ──────────────────────────────────────</span>
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_messaging: ^15.1.3
+  firebase_storage: ^12.3.2
+  firebase_analytics: ^11.3.3
+  firebase_crashlytics: ^4.1.3
+  firebase_performance: ^0.10.0
+  firebase_remote_config: ^5.1.0
+  firebase_app_check: ^0.3.1
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
+
+  <span class="cm"># ── State Management &amp; DI ─────────────────────────</span>
+  flutter_bloc: ^9.0.0
+  equatable: ^2.0.5
+  get_it: ^8.0.2
+  injectable: ^2.4.4
+
+  <span class="cm"># ── Navigation &amp; Functional ───────────────────────</span>
+  go_router: ^14.2.7
+  dartz: ^0.10.1
+
+  <span class="cm"># ── Notifications &amp; UI ────────────────────────────</span>
+  flutter_local_notifications: ^18.0.0
+  app_badge_plus: ^1.1.0
+  cached_network_image: ^3.4.1
+
+  <span class="cm"># ── Network, Storage &amp; Utils ──────────────────────</span>
+  connectivity_plus: ^6.0.5
+  shared_preferences: ^2.3.2
+  dio: ^5.7.0
+  intl: ^0.19.0
+  crypto: ^3.0.5
+  package_info_plus: ^8.0.2
+  pub_semver: ^2.1.4
+
+<span class="kw">dev_dependencies</span>:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  very_good_analysis: ^6.0.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  fake_cloud_firestore: ^3.0.2
+  build_runner: ^2.4.13
+  injectable_generator: ^2.6.2
+
+<span class="kw">flutter</span>:
+  <span class="kw">generate</span>: true
+  <span class="kw">uses-material-design</span>: true</pre>
+    </div>
+  </div>
+
+  <div id="ps-analysis" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML</span>
+        <span class="code-file">analysis_options.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">include</span>: package:very_good_analysis/analysis_options.yaml
+
+<span class="kw">analyzer</span>:
+  <span class="kw">exclude</span>:
+    - <span class="st">"**/*.g.dart"</span>
+    - <span class="st">"**/*.config.dart"</span>
+    - <span class="st">"**/*.freezed.dart"</span>
+    - <span class="st">"lib/l10n/generated/**"</span>
+  <span class="kw">language</span>:
+    strict-casts: <span class="kw">true</span>
+    strict-inference: <span class="kw">true</span>
+    strict-raw-types: <span class="kw">true</span>
+  <span class="kw">errors</span>:
+    invalid_annotation_target: ignore
+    missing_required_param: error
+    missing_return: error
+
+<span class="kw">linter</span>:
+  <span class="kw">rules</span>:
+    public_member_api_docs: <span class="kw">false</span>
+    avoid_print: <span class="kw">true</span>
+    prefer_const_constructors: <span class="kw">true</span>
+    prefer_const_declarations: <span class="kw">true</span>
+    unawaited_futures: <span class="kw">true</span>
+    discarded_futures: <span class="kw">true</span>
+    use_build_context_synchronously: <span class="kw">true</span>
+    directives_ordering: <span class="kw">true</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DOMAIN ═══════════════════ -->
+<div id="domain" class="section">
+  <div class="hero">
+    <div class="hero-tag">Domain Layer</div>
+    <h2>Entities · Repositories · UseCases · Params</h2>
+    <p>Zero Flutter imports. Zero Firebase imports. Pure Dart business contracts.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'d-entity')">Entity</button>
+    <button class="tab" onclick="switchTab(this,'d-repo')">AuthRepository</button>
+    <button class="tab" onclick="switchTab(this,'d-usecase')">UseCase Base</button>
+    <button class="tab" onclick="switchTab(this,'d-params')">Params</button>
+  </div>
+
+  <div id="d-entity" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/auth/domain/entities/user_entity.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> <span class="st">'package:equatable/equatable.dart'</span>;
+
+<span class="kw">class</span> <span class="cls">UserEntity</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">UserEntity</span>({
+    <span class="kw">required</span> <span class="kw">this</span>.id,
+    <span class="kw">this</span>.name,
+    <span class="kw">this</span>.email,
+    <span class="kw">this</span>.phone,
+    <span class="kw">this</span>.photoUrl,
+    <span class="kw">this</span>.username,
+    <span class="kw">this</span>.isPro = <span class="kw">false</span>,
+  });
+
+  <span class="kw">final</span> <span class="ty">String</span> id;
+  <span class="kw">final</span> <span class="ty">String</span>? name, email, phone, photoUrl, username;
+  <span class="kw">final</span> <span class="ty">bool</span> isPro;
+
+  <span class="ty">bool</span> <span class="kw">get</span> needsOnboarding =&gt; username == <span class="kw">null</span> || username!.isEmpty;
+
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [id, name, email, phone, photoUrl, username, isPro];
+}</pre>
+    </div>
+  </div>
+
+  <div id="d-repo" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/auth/domain/repositories/auth_repository.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> <span class="st">'package:dartz/dartz.dart'</span>;
+<span class="kw">import</span> <span class="st">'../../../../core/errors/failures.dart'</span>;
+<span class="kw">import</span> <span class="st">'../entities/user_entity.dart'</span>;
+
+<span class="kw">abstract interface class</span> <span class="cls">AuthRepository</span> {
+  <span class="ty">Stream</span>&lt;<span class="cls">UserEntity</span>?&gt; <span class="fn">watchAuthState</span>();
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">UserEntity</span>&gt;&gt; <span class="fn">signInWithGoogle</span>();
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">UserEntity</span>&gt;&gt; <span class="fn">signInWithApple</span>();
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="ty">String</span>&gt;&gt; <span class="fn">sendOtp</span>(<span class="ty">String</span> phoneNumber);
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">UserEntity</span>&gt;&gt; <span class="fn">verifyOtp</span>({<span class="kw">required</span> <span class="ty">String</span> verificationId, <span class="kw">required</span> <span class="ty">String</span> otp});
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">UserEntity</span>&gt;&gt; <span class="fn">signInWithEmail</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password});
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">UserEntity</span>&gt;&gt; <span class="fn">signUpWithEmail</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password});
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">Unit</span>&gt;&gt; <span class="fn">sendPasswordReset</span>(<span class="ty">String</span> email);
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">Unit</span>&gt;&gt; <span class="fn">signOut</span>();
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">Unit</span>&gt;&gt; <span class="fn">deleteAccount</span>();
+}</pre>
+    </div>
+  </div>
+
+  <div id="d-usecase" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/usecases/usecase.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> <span class="st">'package:dartz/dartz.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:equatable/equatable.dart'</span>;
+<span class="kw">import</span> <span class="st">'../errors/failures.dart'</span>;
+
+<span class="kw">abstract interface class</span> <span class="cls">UseCase</span>&lt;<span class="ty">Type</span>, <span class="ty">Params</span>&gt; {
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="ty">Type</span>&gt;&gt; <span class="fn">call</span>(<span class="ty">Params</span> params);
+}
+
+<span class="kw">abstract interface class</span> <span class="cls">StreamUseCase</span>&lt;<span class="ty">Type</span>, <span class="ty">Params</span>&gt; {
+  <span class="ty">Stream</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="ty">Type</span>&gt;&gt; <span class="fn">call</span>(<span class="ty">Params</span> params);
+}
+
+<span class="kw">final class</span> <span class="cls">NoParams</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">NoParams</span>();
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [];
+}</pre>
+    </div>
+  </div>
+
+  <div id="d-params" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/boards/domain/usecases/create_board.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">CreateBoardParams</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">CreateBoardParams</span>({<span class="kw">required</span> <span class="kw">this</span>.title, <span class="kw">required</span> <span class="kw">this</span>.color, <span class="kw">required</span> <span class="kw">this</span>.userId});
+  <span class="kw">final</span> <span class="ty">String</span> title, color, userId;
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [title, color, userId];
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DATA + PAGINATION + STORAGE ═══════════════════ -->
+<div id="data" class="section">
+  <div class="hero">
+    <div class="hero-tag">Data Layer</div>
+    <h2>Models · Offline Datasource · Repository Impl · Pagination · Storage</h2>
+    <p>Type-safe Firestore with <code>withConverter</code>, safe timestamp parsing, cursor pagination, and Storage uploads.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'data-model')">Safe Model</button>
+    <button class="tab" onclick="switchTab(this,'data-ds')">Datasource</button>
+    <button class="tab" onclick="switchTab(this,'data-repo')">Repository Impl</button>
+    <button class="tab" onclick="switchTab(this,'data-page')">Pagination</button>
+    <button class="tab" onclick="switchTab(this,'data-storage')">Storage Upload</button>
+  </div>
+
+  <div id="data-model" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/boards/data/models/board_model.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> <span class="st">'package:cloud_firestore/cloud_firestore.dart'</span>;
+<span class="kw">import</span> <span class="st">'../../domain/entities/board_entity.dart'</span>;
+
+<span class="kw">class</span> <span class="cls">BoardModel</span> {
+  <span class="kw">const</span> <span class="cls">BoardModel</span>({
+    <span class="kw">required</span> <span class="kw">this</span>.id, <span class="kw">required</span> <span class="kw">this</span>.title, <span class="kw">required</span> <span class="kw">this</span>.color,
+    <span class="kw">required</span> <span class="kw">this</span>.ownerId, <span class="kw">required</span> <span class="kw">this</span>.memberIds, <span class="kw">required</span> <span class="kw">this</span>.updatedAt,
+    <span class="kw">this</span>.createdAt, <span class="kw">this</span>.hasPendingWrites = <span class="kw">false</span>,
+  });
+
+  <span class="kw">final</span> <span class="ty">String</span> id, title, color, ownerId;
+  <span class="kw">final</span> <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; memberIds;
+  <span class="kw">final</span> <span class="cls">DateTime</span>? createdAt;
+  <span class="kw">final</span> <span class="cls">DateTime</span> updatedAt;
+  <span class="kw">final</span> <span class="ty">bool</span> hasPendingWrites;
+
+  <span class="kw">factory</span> <span class="cls">BoardModel</span>.<span class="fn">fromFirestore</span>(<span class="cls">DocumentSnapshot</span>&lt;<span class="cls">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;&gt; doc) {
+    <span class="kw">final</span> data = doc.data() ?? &lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;{};
+    <span class="kw">return</span> <span class="cls">BoardModel</span>(
+      id: doc.id,
+      title: (data[<span class="st">'title'</span>] <span class="kw">as</span> <span class="ty">String</span>?) ?? <span class="st">''</span>,
+      color: (data[<span class="st">'color'</span>] <span class="kw">as</span> <span class="ty">String</span>?) ?? <span class="st">'#6366F1'</span>,
+      ownerId: (data[<span class="st">'ownerId'</span>] <span class="kw">as</span> <span class="ty">String</span>?) ?? <span class="st">''</span>,
+      memberIds: <span class="ty">List</span>&lt;<span class="ty">String</span>&gt;.<span class="fn">from</span>((data[<span class="st">'memberIds'</span>] <span class="kw">as</span> <span class="ty">List</span>?) ?? <span class="kw">const</span> []),
+      createdAt: (data[<span class="st">'createdAt'</span>] <span class="kw">as</span> <span class="cls">Timestamp</span>?)?.<span class="fn">toDate</span>(),
+      updatedAt: (data[<span class="st">'updatedAt'</span>] <span class="kw">as</span> <span class="cls">Timestamp</span>?)?.<span class="fn">toDate</span>() ?? <span class="cls">DateTime</span>.<span class="fn">now</span>(),
+      hasPendingWrites: doc.metadata.hasPendingWrites,
+    );
+  }
+
+  <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt; <span class="fn">toMap</span>() =&gt; {
+        <span class="st">'title'</span>: title, <span class="st">'color'</span>: color, <span class="st">'ownerId'</span>: ownerId,
+        <span class="st">'memberIds'</span>: memberIds, <span class="st">'updatedAt'</span>: <span class="cls">FieldValue</span>.<span class="fn">serverTimestamp</span>(),
+      };
+
+  <span class="cls">BoardEntity</span> <span class="fn">toEntity</span>() =&gt; <span class="cls">BoardEntity</span>(
+        id: id, title: title, color: color, ownerId: ownerId,
+        memberIds: memberIds, createdAt: createdAt, updatedAt: updatedAt, hasPendingWrites: hasPendingWrites,
+      );
+}</pre>
+    </div>
+  </div>
+
+  <div id="data-ds" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/boards/data/datasources/boards_remote_datasource.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@<span class="cls">LazySingleton</span>(<span class="kw">as</span>: <span class="cls">BoardsRemoteDatasource</span>)
+<span class="kw">class</span> <span class="cls">BoardsRemoteDatasourceImpl</span> <span class="kw">implements</span> <span class="cls">BoardsRemoteDatasource</span> {
+  <span class="kw">const</span> <span class="cls">BoardsRemoteDatasourceImpl</span>(<span class="kw">this</span>._firestore);
+  <span class="kw">final</span> <span class="cls">FirebaseFirestore</span> _firestore;
+
+  <span class="cls">CollectionReference</span>&lt;<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;&gt; <span class="kw">get</span> _raw =&gt; _firestore.<span class="fn">collection</span>(<span class="st">'boards'</span>);
+  <span class="cls">CollectionReference</span>&lt;<span class="cls">BoardModel</span>&gt; <span class="kw">get</span> _boards =&gt; _raw.<span class="fn">withConverter</span>&lt;<span class="cls">BoardModel</span>&gt;(
+        fromFirestore: (snap, _) =&gt; <span class="cls">BoardModel</span>.<span class="fn">fromFirestore</span>(snap),
+        toFirestore: (model, _) =&gt; model.<span class="fn">toMap</span>(),
+      );
+
+  @<span class="kw">override</span>
+  <span class="ty">Stream</span>&lt;<span class="ty">List</span>&lt;<span class="cls">BoardModel</span>&gt;&gt; <span class="fn">watchBoards</span>(<span class="ty">String</span> userId) =&gt; _boards
+      .<span class="fn">where</span>(<span class="st">'memberIds'</span>, arrayContains: userId)
+      .<span class="fn">orderBy</span>(<span class="st">'updatedAt'</span>, descending: <span class="kw">true</span>)
+      .<span class="fn">limit</span>(<span class="nu">50</span>)
+      .<span class="fn">snapshots</span>(includeMetadataChanges: <span class="kw">true</span>)
+      .<span class="fn">map</span>((s) =&gt; s.docs.<span class="fn">map</span>((d) =&gt; d.<span class="fn">data</span>()).<span class="fn">toList</span>());
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">BoardModel</span>&gt; <span class="fn">createBoard</span>(<span class="cls">CreateBoardParams</span> params) <span class="kw">async</span> {
+    <span class="kw">final</span> ref = _raw.<span class="fn">doc</span>();
+    <span class="kw">final</span> model = <span class="cls">BoardModel</span>(
+      id: ref.id, title: params.title, color: params.color, ownerId: params.userId,
+      memberIds: [params.userId], updatedAt: <span class="cls">DateTime</span>.<span class="fn">now</span>(), hasPendingWrites: <span class="kw">true</span>,
+    );
+    _fireAndLog(ref.<span class="fn">set</span>({...model.<span class="fn">toMap</span>(), <span class="st">'createdAt'</span>: <span class="cls">FieldValue</span>.<span class="fn">serverTimestamp</span>()}), <span class="st">'createBoard'</span>);
+    <span class="kw">return</span> model;
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">deleteBoard</span>(<span class="ty">String</span> boardId) <span class="kw">async</span> {
+    <span class="kw">final</span> boardRef = _raw.<span class="fn">doc</span>(boardId);
+    <span class="kw">final</span> cards = <span class="kw">await</span> boardRef.<span class="fn">collection</span>(<span class="st">'cards'</span>).<span class="fn">get</span>();
+    <span class="kw">final</span> refs = [...cards.docs.<span class="fn">map</span>((d) =&gt; d.reference), boardRef];
+    <span class="kw">const</span> chunk = <span class="nu">400</span>;
+    <span class="kw">for</span> (<span class="kw">var</span> i = <span class="nu">0</span>; i &lt; refs.length; i += chunk) {
+      <span class="kw">final</span> batch = _firestore.<span class="fn">batch</span>();
+      <span class="kw">for</span> (<span class="kw">final</span> ref <span class="kw">in</span> refs.<span class="fn">skip</span>(i).<span class="fn">take</span>(chunk)) { batch.<span class="fn">delete</span>(ref); }
+      _fireAndLog(batch.<span class="fn">commit</span>(), <span class="st">'deleteBoard'</span>);
+    }
+  }
+
+  <span class="kw">void</span> <span class="fn">_fireAndLog</span>(<span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; write, <span class="ty">String</span> op) {
+    <span class="fn">unawaited</span>(write.<span class="fn">catchError</span>((<span class="ty">Object</span> e, <span class="cls">StackTrace</span> s) =&gt; <span class="cls">AppLogger</span>.<span class="fn">error</span>(<span class="st">'$op rejected'</span>, error: e, stack: s)));
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="data-repo" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/boards/data/repositories/boards_repository_impl.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@<span class="cls">LazySingleton</span>(<span class="kw">as</span>: <span class="cls">BoardsRepository</span>)
+<span class="kw">class</span> <span class="cls">BoardsRepositoryImpl</span> <span class="kw">implements</span> <span class="cls">BoardsRepository</span> {
+  <span class="kw">const</span> <span class="cls">BoardsRepositoryImpl</span>(<span class="kw">this</span>._remote);
+  <span class="kw">final</span> <span class="cls">BoardsRemoteDatasource</span> _remote;
+
+  @<span class="kw">override</span>
+  <span class="ty">Stream</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="ty">List</span>&lt;<span class="cls">BoardEntity</span>&gt;&gt;&gt; <span class="fn">watchBoards</span>(<span class="ty">String</span> userId) <span class="kw">async</span>* {
+    <span class="kw">try</span> {
+      <span class="kw">yield</span>* _remote.<span class="fn">watchBoards</span>(userId).<span class="fn">map</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="ty">List</span>&lt;<span class="cls">BoardEntity</span>&gt;&gt;&gt;(
+            (models) =&gt; <span class="cls">Right</span>(models.<span class="fn">map</span>((m) =&gt; m.<span class="fn">toEntity</span>()).<span class="fn">toList</span>()),
+          );
+    } on <span class="cls">FirebaseException</span> <span class="kw">catch</span> (e) {
+      <span class="kw">yield</span> <span class="cls">Left</span>(e.<span class="fn">toFailure</span>());
+    }
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">Either</span>&lt;<span class="cls">AppFailure</span>, <span class="cls">BoardEntity</span>&gt;&gt; <span class="fn">createBoard</span>(<span class="cls">CreateBoardParams</span> params) <span class="kw">async</span> {
+    <span class="kw">try</span> {
+      <span class="kw">final</span> model = <span class="kw">await</span> _remote.<span class="fn">createBoard</span>(params);
+      <span class="kw">return</span> <span class="cls">Right</span>(model.<span class="fn">toEntity</span>());
+    } on <span class="cls">FirebaseException</span> <span class="kw">catch</span> (e) {
+      <span class="kw">return</span> <span class="cls">Left</span>(e.<span class="fn">toFailure</span>());
+    } <span class="kw">catch</span> (e, s) {
+      <span class="cls">AppLogger</span>.<span class="fn">error</span>(<span class="st">'createBoard failed'</span>, error: e, stack: s);
+      <span class="kw">return</span> <span class="cls">Left</span>(<span class="cls">UnknownFailure</span>(e.<span class="fn">toString</span>()));
+    }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="data-page" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">Cursor pagination pattern — startAfterDocument + opaque cursor</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">PaginatedResult</span>&lt;<span class="ty">T</span>&gt; {
+  <span class="kw">const</span> <span class="cls">PaginatedResult</span>({<span class="kw">required</span> <span class="kw">this</span>.items, <span class="kw">required</span> <span class="kw">this</span>.hasMore, <span class="kw">this</span>.cursor});
+  <span class="kw">final</span> <span class="ty">List</span>&lt;<span class="ty">T</span>&gt; items;
+  <span class="kw">final</span> <span class="ty">bool</span> hasMore;
+  <span class="kw">final</span> <span class="ty">Object</span>? cursor;
+}
+
+<span class="ty">Future</span>&lt;<span class="cls">PaginatedResult</span>&lt;<span class="cls">ActivityModel</span>&gt;&gt; <span class="fn">fetchActivityPage</span>({
+  <span class="kw">required</span> <span class="ty">String</span> boardId, <span class="ty">Object</span>? cursor, <span class="ty">int</span> pageSize = <span class="nu">25</span>,
+}) <span class="kw">async</span> {
+  <span class="kw">var</span> query = _firestore
+      .<span class="fn">collection</span>(<span class="st">'boards'</span>).<span class="fn">doc</span>(boardId).<span class="fn">collection</span>(<span class="st">'activity'</span>)
+      .<span class="fn">orderBy</span>(<span class="st">'createdAt'</span>, descending: <span class="kw">true</span>).<span class="fn">limit</span>(pageSize);
+  <span class="kw">if</span> (cursor <span class="kw">is</span> <span class="cls">DocumentSnapshot</span>) query = query.<span class="fn">startAfterDocument</span>(cursor);
+  <span class="kw">final</span> snap = <span class="kw">await</span> query.<span class="fn">get</span>();
+  <span class="kw">return</span> <span class="cls">PaginatedResult</span>(
+    items: snap.docs.<span class="fn">map</span>(<span class="cls">ActivityModel</span>.fromFirestore).<span class="fn">toList</span>(),
+    hasMore: snap.docs.length == pageSize,
+    cursor: snap.docs.isEmpty ? cursor : snap.docs.last,
+  );
+}</pre>
+    </div>
+  </div>
+
+  <div id="data-storage" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/storage/storage_service.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@lazySingleton
+<span class="kw">class</span> <span class="cls">StorageService</span> {
+  <span class="cls">StorageService</span>(<span class="kw">this</span>._storage, <span class="kw">this</span>._perf);
+  <span class="kw">final</span> <span class="cls">FirebaseStorage</span> _storage;
+  <span class="kw">final</span> <span class="cls">PerfService</span> _perf;
+
+  <span class="ty">Future</span>&lt;<span class="ty">String</span>&gt; <span class="fn">uploadBytes</span>({
+    <span class="kw">required</span> <span class="ty">String</span> path, <span class="kw">required</span> <span class="cls">Uint8List</span> bytes, <span class="kw">required</span> <span class="ty">String</span> contentType,
+    <span class="kw">void</span> <span class="cls">Function</span>(<span class="ty">double</span> progress)? onProgress,
+  }) =&gt;
+      _perf.<span class="fn">trace</span>(<span class="st">'storage_upload'</span>, () <span class="kw">async</span> {
+        <span class="kw">final</span> ref = _storage.<span class="fn">ref</span>(path);
+        <span class="kw">final</span> task = ref.<span class="fn">putData</span>(bytes, <span class="cls">SettableMetadata</span>(contentType: contentType));
+        <span class="kw">final</span> sub = task.snapshotEvents.<span class="fn">listen</span>((s) {
+          <span class="kw">if</span> (s.totalBytes &gt; <span class="nu">0</span>) onProgress?.<span class="fn">call</span>(s.bytesTransferred / s.totalBytes);
+        });
+        <span class="kw">try</span> {
+          <span class="kw">await</span> task;
+          <span class="kw">return</span> <span class="kw">await</span> ref.<span class="fn">getDownloadURL</span>();
+        } <span class="kw">finally</span> {
+          <span class="kw">await</span> sub.<span class="fn">cancel</span>();
+        }
+      }, attributes: {<span class="st">'size_bucket'</span>: bytes.length &lt; <span class="nu">1048576</span> ? <span class="st">'&lt;1MB'</span> : <span class="st">'&gt;=1MB'</span>});
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ BLOC ═══════════════════ -->
+<div id="bloc" class="section">
+  <div class="hero">
+    <div class="hero-tag">BLoC Layer</div>
+    <h2>Single State · Enum Status · copyWith · UI Switch · Observer</h2>
+    <p>One immutable state class per feature, <code>sealed</code> events, <code>emit.forEach</code> stream safety, and global <code>AppBlocObserver</code>.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'b-state')">State + Events</button>
+    <button class="tab" onclick="switchTab(this,'b-bloc')">BLoC</button>
+    <button class="tab" onclick="switchTab(this,'b-ui')">UI BlocConsumer</button>
+    <button class="tab" onclick="switchTab(this,'b-observer')">AppBlocObserver</button>
+  </div>
+
+  <div id="b-state" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">presentation/bloc/boards_state.dart + boards_event.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">enum</span> <span class="cls">BoardsStatus</span> { initial, loading, success, failure }
+
+<span class="kw">class</span> <span class="cls">BoardsState</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">BoardsState</span>({<span class="kw">this</span>.status = <span class="cls">BoardsStatus</span>.initial, <span class="kw">this</span>.boards = <span class="kw">const</span> [], <span class="kw">this</span>.failure});
+  <span class="kw">final</span> <span class="cls">BoardsStatus</span> status;
+  <span class="kw">final</span> <span class="ty">List</span>&lt;<span class="cls">BoardEntity</span>&gt; boards;
+  <span class="kw">final</span> <span class="cls">AppFailure</span>? failure;
+
+  <span class="cls">BoardsState</span> <span class="fn">copyWith</span>({<span class="cls">BoardsStatus</span>? status, <span class="ty">List</span>&lt;<span class="cls">BoardEntity</span>&gt;? boards, <span class="cls">AppFailure</span>? <span class="ty">Function</span>()? failure}) =&gt;
+      <span class="cls">BoardsState</span>(
+        status: status ?? <span class="kw">this</span>.status,
+        boards: boards ?? <span class="kw">this</span>.boards,
+        failure: failure != <span class="kw">null</span> ? <span class="fn">failure</span>() : <span class="kw">this</span>.failure,
+      );
+
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [status, boards, failure];
+}
+
+<span class="kw">sealed class</span> <span class="cls">BoardsEvent</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">BoardsEvent</span>();
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [];
+}
+<span class="kw">class</span> <span class="cls">WatchBoardsStarted</span> <span class="kw">extends</span> <span class="cls">BoardsEvent</span> {
+  <span class="kw">const</span> <span class="cls">WatchBoardsStarted</span>(<span class="kw">this</span>.userId);
+  <span class="kw">final</span> <span class="ty">String</span> userId;
+  @<span class="kw">override</span>
+  <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [userId];
+}
+<span class="kw">class</span> <span class="cls">BoardsRefreshed</span> <span class="kw">extends</span> <span class="cls">BoardsEvent</span> { <span class="kw">const</span> <span class="cls">BoardsRefreshed</span>(); }</pre>
+    </div>
+  </div>
+
+  <div id="b-bloc" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">presentation/bloc/boards_bloc.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@injectable
+<span class="kw">class</span> <span class="cls">BoardsBloc</span> <span class="kw">extends</span> <span class="cls">Bloc</span>&lt;<span class="cls">BoardsEvent</span>, <span class="cls">BoardsState</span>&gt; {
+  <span class="cls">BoardsBloc</span>(<span class="kw">this</span>._watchBoards, <span class="kw">this</span>._createBoard, <span class="kw">this</span>._deleteBoard) : <span class="kw">super</span>(<span class="kw">const</span> <span class="cls">BoardsState</span>()) {
+    on&lt;<span class="cls">WatchBoardsStarted</span>&gt;(_onWatchStarted);
+    on&lt;<span class="cls">BoardsRefreshed</span>&gt;(_onRefreshed);
+    on&lt;<span class="cls">CreateBoardRequested</span>&gt;(_onCreateBoard);
+    on&lt;<span class="cls">DeleteBoardRequested</span>&gt;(_onDeleteBoard);
+  }
+  <span class="kw">final</span> <span class="cls">WatchBoards</span> _watchBoards;
+  <span class="kw">final</span> <span class="cls">CreateBoard</span> _createBoard;
+  <span class="kw">final</span> <span class="cls">DeleteBoard</span> _deleteBoard;
+  <span class="ty">String</span>? _userId;
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onWatchStarted</span>(<span class="cls">WatchBoardsStarted</span> e, <span class="cls">Emitter</span>&lt;<span class="cls">BoardsState</span>&gt; emit) <span class="kw">async</span> {
+    _userId = e.userId;
+    <span class="fn">emit</span>(state.<span class="fn">copyWith</span>(status: <span class="cls">BoardsStatus</span>.loading));
+    <span class="kw">await</span> emit.<span class="fn">forEach</span>(
+      <span class="fn">_watchBoards</span>(e.userId),
+      onData: (result) =&gt; result.<span class="fn">fold</span>(
+        (f) =&gt; state.<span class="fn">copyWith</span>(status: <span class="cls">BoardsStatus</span>.failure, failure: () =&gt; f),
+        (b) =&gt; state.<span class="fn">copyWith</span>(status: <span class="cls">BoardsStatus</span>.success, boards: b, failure: () =&gt; <span class="kw">null</span>),
+      ),
+    );
+  }
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onRefreshed</span>(<span class="cls">BoardsRefreshed</span> _, <span class="cls">Emitter</span>&lt;<span class="cls">BoardsState</span>&gt; emit) =&gt;
+      _userId == <span class="kw">null</span> ? <span class="ty">Future</span>.<span class="fn">value</span>() : <span class="fn">_onWatchStarted</span>(<span class="cls">WatchBoardsStarted</span>(_userId!), emit);
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onCreateBoard</span>(<span class="cls">CreateBoardRequested</span> e, <span class="cls">Emitter</span>&lt;<span class="cls">BoardsState</span>&gt; emit) <span class="kw">async</span> {
+    <span class="kw">final</span> res = <span class="kw">await</span> <span class="fn">_createBoard</span>(<span class="cls">CreateBoardParams</span>(title: e.title, color: e.color, userId: e.userId));
+    res.<span class="fn">fold</span>((f) =&gt; <span class="fn">emit</span>(state.<span class="fn">copyWith</span>(status: <span class="cls">BoardsStatus</span>.failure, failure: () =&gt; f)), (_) {});
+  }
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onDeleteBoard</span>(<span class="cls">DeleteBoardRequested</span> e, <span class="cls">Emitter</span>&lt;<span class="cls">BoardsState</span>&gt; emit) <span class="kw">async</span> {
+    <span class="kw">final</span> res = <span class="kw">await</span> <span class="fn">_deleteBoard</span>(e.boardId);
+    res.<span class="fn">fold</span>((f) =&gt; <span class="fn">emit</span>(state.<span class="fn">copyWith</span>(status: <span class="cls">BoardsStatus</span>.failure, failure: () =&gt; f)), (_) {});
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="b-ui" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">UI — keep existing data on refresh failure, full ErrorView only when empty</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cls">BlocConsumer</span>&lt;<span class="cls">BoardsBloc</span>, <span class="cls">BoardsState</span>&gt;(
+  listenWhen: (p, c) =&gt;
+      c.failure != <span class="kw">null</span> &amp;&amp; p.failure != c.failure &amp;&amp;
+      c.boards.isNotEmpty &amp;&amp; c.failure <span class="kw">is</span>! <span class="cls">CancelledFailure</span>,
+  listener: (context, s) =&gt; <span class="cls">AppSnackBar</span>.<span class="fn">error</span>(context, s.failure!.<span class="fn">localize</span>(context)),
+  builder: (context, s) =&gt; <span class="kw">switch</span> (s) {
+    <span class="cls">BoardsState</span>(status: <span class="cls">BoardsStatus</span>.loading, boards: []) =&gt; <span class="kw">const</span> <span class="cls">AppShimmer</span>(),
+    <span class="cls">BoardsState</span>(status: <span class="cls">BoardsStatus</span>.failure, boards: [], :<span class="kw">final</span> failure?) =&gt; <span class="cls">ErrorView</span>(
+        failure: failure,
+        onRetry: () =&gt; context.read&lt;<span class="cls">BoardsBloc</span>&gt;().<span class="fn">add</span>(<span class="kw">const</span> <span class="cls">BoardsRefreshed</span>()),
+      ),
+    <span class="cls">BoardsState</span>(boards: []) =&gt; <span class="kw">const</span> <span class="cls">AppEmptyState</span>(),
+    <span class="cls">BoardsState</span>(:<span class="kw">final</span> boards) =&gt; <span class="cls">BoardsGrid</span>(boards: boards),
+  },
+);</pre>
+    </div>
+  </div>
+
+  <div id="b-observer" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/observers/app_bloc_observer.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">AppBlocObserver</span> <span class="kw">extends</span> <span class="cls">BlocObserver</span> {
+  @<span class="kw">override</span>
+  <span class="kw">void</span> <span class="fn">onEvent</span>(<span class="cls">Bloc</span>&lt;<span class="kw">dynamic</span>, <span class="kw">dynamic</span>&gt; bloc, <span class="ty">Object</span>? event) {
+    <span class="kw">super</span>.<span class="fn">onEvent</span>(bloc, event);
+    <span class="cls">AppLogger</span>.<span class="fn">info</span>(<span class="st">'EVENT: $event'</span>, tag: <span class="st">'${bloc.runtimeType}'</span>);
+  }
+  @<span class="kw">override</span>
+  <span class="kw">void</span> <span class="fn">onError</span>(<span class="cls">BlocBase</span>&lt;<span class="kw">dynamic</span>&gt; bloc, <span class="ty">Object</span> error, <span class="cls">StackTrace</span> stackTrace) {
+    <span class="cls">AppLogger</span>.<span class="fn">error</span>(<span class="st">'BLoC ${bloc.runtimeType}'</span>, error: error, stack: stackTrace);
+    sl&lt;<span class="cls">ErrorReporter</span>&gt;().<span class="fn">record</span>(error, stackTrace, reason: <span class="st">'BLoC ${bloc.runtimeType}'</span>);
+    <span class="kw">super</span>.<span class="fn">onError</span>(bloc, error, stackTrace);
+  }
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DI ═══════════════════ -->
+<div id="di" class="section">
+  <div class="hero">
+    <div class="hero-tag">Dependency Injection</div>
+    <h2>GetIt + Injectable (v2.4+ Syntax)</h2>
+    <p>Uses modern <code>sl.init()</code> and <code>@preResolve</code> for async singletons like <code>SharedPreferences</code> and <code>PackageInfo</code>.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">lib/injection_container.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="kw">import</span> <span class="st">'package:cloud_firestore/cloud_firestore.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:connectivity_plus/connectivity_plus.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_analytics/firebase_analytics.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_auth/firebase_auth.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_messaging/firebase_messaging.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_performance/firebase_performance.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_remote_config/firebase_remote_config.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:firebase_storage/firebase_storage.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:get_it/get_it.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:injectable/injectable.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:package_info_plus/package_info_plus.dart'</span>;
+<span class="kw">import</span> <span class="st">'package:shared_preferences/shared_preferences.dart'</span>;
+<span class="kw">import</span> <span class="st">'injection_container.config.dart'</span>;
+
+<span class="kw">final</span> <span class="cls">GetIt</span> sl = <span class="cls">GetIt</span>.instance;
+
+<span class="de">@InjectableInit</span>()
+<span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">configureDependencies</span>() =&gt; sl.<span class="fn">init</span>();
+
+<span class="de">@module</span>
+<span class="kw">abstract class</span> <span class="cls">FirebaseModule</span> {
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseFirestore</span> <span class="kw">get</span> firestore =&gt; <span class="cls">FirebaseFirestore</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseAuth</span> <span class="kw">get</span> auth =&gt; <span class="cls">FirebaseAuth</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseMessaging</span> <span class="kw">get</span> messaging =&gt; <span class="cls">FirebaseMessaging</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseStorage</span> <span class="kw">get</span> storage =&gt; <span class="cls">FirebaseStorage</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseRemoteConfig</span> <span class="kw">get</span> remoteConfig =&gt; <span class="cls">FirebaseRemoteConfig</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebasePerformance</span> <span class="kw">get</span> performance =&gt; <span class="cls">FirebasePerformance</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">FirebaseAnalytics</span> <span class="kw">get</span> analytics =&gt; <span class="cls">FirebaseAnalytics</span>.instance;
+  <span class="de">@lazySingleton</span> <span class="cls">Connectivity</span> <span class="kw">get</span> connectivity =&gt; <span class="cls">Connectivity</span>();
+
+  <span class="de">@preResolve</span> <span class="ty">Future</span>&lt;<span class="cls">SharedPreferences</span>&gt; <span class="kw">get</span> prefs =&gt; <span class="cls">SharedPreferences</span>.<span class="fn">getInstance</span>();
+  <span class="de">@preResolve</span> <span class="ty">Future</span>&lt;<span class="cls">PackageInfo</span>&gt; <span class="kw">get</span> packageInfo =&gt; <span class="cls">PackageInfo</span>.<span class="fn">fromPlatform</span>();
+}</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ ROUTER ═══════════════════ -->
+<div id="router" class="section">
+  <div class="hero">
+    <div class="hero-tag">Navigation &amp; Deep Links</div>
+    <h2>GoRouter · Splash Guard · Onboarding · Universal/App Links</h2>
+    <p>Zero login flash on cold start via <code>AuthStatus.unknown</code>, ops guards first, and HTTPS Deep Linking.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'rt-router')">app_router.dart</button>
+    <button class="tab" onclick="switchTab(this,'rt-names')">route_names.dart + helpers</button>
+    <button class="tab" onclick="switchTab(this,'rt-links')">Universal / App Links</button>
+  </div>
+
+  <div id="rt-router" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/router/app_router.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cls">GoRouter</span> <span class="fn">createAppRouter</span>({<span class="kw">required</span> <span class="cls">AuthBloc</span> authBloc, <span class="kw">required</span> <span class="cls">FeatureFlagsCubit</span> flags}) {
+  <span class="kw">return</span> <span class="cls">GoRouter</span>(
+    initialLocation: <span class="cls">RouteNames</span>.splash,
+    refreshListenable: <span class="cls">Listenable</span>.<span class="fn">merge</span>([<span class="cls">StreamListenable</span>(authBloc.stream), <span class="cls">StreamListenable</span>(flags.stream)]),
+    redirect: (context, state) {
+      <span class="kw">final</span> loc = state.matchedLocation;
+      <span class="kw">final</span> f = flags.state;
+      <span class="kw">if</span> (f.maintenanceMode) <span class="kw">return</span> loc == <span class="cls">RouteNames</span>.maintenance ? <span class="kw">null</span> : <span class="cls">RouteNames</span>.maintenance;
+      <span class="kw">if</span> (<span class="fn">isBelowMinVersion</span>(f.minSupportedVersion)) {
+        <span class="kw">return</span> loc == <span class="cls">RouteNames</span>.updateRequired ? <span class="kw">null</span> : <span class="cls">RouteNames</span>.updateRequired;
+      }
+      <span class="kw">if</span> (loc == <span class="cls">RouteNames</span>.maintenance || loc == <span class="cls">RouteNames</span>.updateRequired) <span class="kw">return</span> <span class="cls">RouteNames</span>.splash;
+
+      <span class="kw">final</span> authState = authBloc.state;
+      <span class="kw">if</span> (authState.status == <span class="cls">AuthStatus</span>.unknown) {
+        <span class="kw">return</span> loc == <span class="cls">RouteNames</span>.splash ? <span class="kw">null</span> : <span class="cls">RouteNames</span>.splash;
+      }
+      <span class="kw">final</span> isAuth = authState.status == <span class="cls">AuthStatus</span>.authenticated;
+      <span class="kw">final</span> onAuthRoute = loc.<span class="fn">startsWith</span>(<span class="cls">RouteNames</span>.authPrefix);
+
+      <span class="kw">if</span> (!isAuth) <span class="kw">return</span> onAuthRoute ? <span class="kw">null</span> : <span class="cls">RouteNames</span>.welcome;
+      <span class="kw">if</span> (authState.user?.needsOnboarding ?? <span class="kw">false</span>) {
+        <span class="kw">return</span> loc == <span class="cls">RouteNames</span>.onboarding ? <span class="kw">null</span> : <span class="cls">RouteNames</span>.onboarding;
+      }
+      <span class="kw">if</span> (loc == <span class="cls">RouteNames</span>.splash || onAuthRoute || loc == <span class="cls">RouteNames</span>.onboarding) {
+        <span class="kw">return</span> <span class="cls">RouteNames</span>.home;
+      }
+      <span class="kw">return</span> <span class="kw">null</span>;
+    },
+    routes: [
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.splash, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">SplashPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.onboarding, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">OnboardingPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.welcome, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">WelcomePage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.phoneLogin, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">PhoneLoginPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.otp, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">OtpPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.emailLogin, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">EmailLoginPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.home, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">HomePage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.board, builder: (_, s) =&gt; <span class="cls">BoardPage</span>(boardId: s.pathParameters[<span class="st">'id'</span>]!)),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.notifications, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">NotificationsPage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.maintenance, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">MaintenancePage</span>()),
+      <span class="cls">GoRoute</span>(path: <span class="cls">RouteNames</span>.updateRequired, builder: (_, __) =&gt; <span class="kw">const</span> <span class="cls">UpdateRequiredPage</span>()),
+    ],
+  );
+}</pre>
+    </div>
+  </div>
+
+  <div id="rt-names" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/router/route_names.dart + stream_listenable.dart + app_navigator.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">abstract final class</span> <span class="cls">RouteNames</span> {
+  <span class="kw">static const</span> splash = <span class="st">'/splash'</span>;
+  <span class="kw">static const</span> onboarding = <span class="st">'/onboarding'</span>;
+  <span class="kw">static const</span> welcome = <span class="st">'/auth/welcome'</span>;
+  <span class="kw">static const</span> phoneLogin = <span class="st">'/auth/phone'</span>;
+  <span class="kw">static const</span> otp = <span class="st">'/auth/otp'</span>;
+  <span class="kw">static const</span> emailLogin = <span class="st">'/auth/email'</span>;
+  <span class="kw">static const</span> home = <span class="st">'/home'</span>;
+  <span class="kw">static const</span> board = <span class="st">'/board/:id'</span>;
+  <span class="kw">static const</span> notifications = <span class="st">'/notifications'</span>;
+  <span class="kw">static const</span> maintenance = <span class="st">'/maintenance'</span>;
+  <span class="kw">static const</span> updateRequired = <span class="st">'/update-required'</span>;
+  <span class="kw">static const</span> authPrefix = <span class="st">'/auth'</span>;
+  <span class="kw">static</span> <span class="ty">String</span> <span class="fn">boardPath</span>(<span class="ty">String</span> id) =&gt; <span class="st">'/board/$id'</span>;
+}
+
+<span class="kw">class</span> <span class="cls">StreamListenable</span> <span class="kw">extends</span> <span class="cls">ChangeNotifier</span> {
+  <span class="cls">StreamListenable</span>(<span class="ty">Stream</span>&lt;<span class="ty">dynamic</span>&gt; stream) { _sub = stream.<span class="fn">listen</span>((_) =&gt; <span class="fn">notifyListeners</span>()); }
+  <span class="kw">late final</span> <span class="cls">StreamSubscription</span>&lt;<span class="ty">dynamic</span>&gt; _sub;
+  @<span class="kw">override</span> <span class="kw">void</span> <span class="fn">dispose</span>() { <span class="fn">unawaited</span>(_sub.<span class="fn">cancel</span>()); <span class="kw">super</span>.<span class="fn">dispose</span>(); }
+}
+
+<span class="kw">abstract final class</span> <span class="cls">AppNavigator</span> {
+  <span class="kw">static late</span> <span class="cls">GoRouter</span> router;
+  <span class="kw">static void</span> <span class="fn">go</span>(<span class="ty">String</span> location) =&gt; router.<span class="fn">go</span>(location);
+}</pre>
+    </div>
+  </div>
+
+  <div id="rt-links" class="tab-content">
+    <div class="box box-info"><strong>Firebase Dynamic Links is retired (Aug 2025).</strong> Use native HTTPS Universal Links (iOS) + App Links (Android) directly with GoRouter.</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">JSON</span>
+        <span class="code-file">.well-known/assetlinks.json &amp; apple-app-site-association</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm">// Android: https://yourapp.com/.well-known/assetlinks.json</span>
+[{
+  <span class="st">"relation"</span>: [<span class="st">"delegate_permission/common.handle_all_urls"</span>],
+  <span class="st">"target"</span>: { <span class="st">"namespace"</span>: <span class="st">"android_app"</span>, <span class="st">"package_name"</span>: <span class="st">"com.example.taskboard"</span>, <span class="st">"sha256_cert_fingerprints"</span>: [<span class="st">"&lt;SHA256&gt;"</span>] }
+}]
+
+<span class="cm">// iOS: https://yourapp.com/.well-known/apple-app-site-association</span>
+{ <span class="st">"applinks"</span>: { <span class="st">"details"</span>: [{ <span class="st">"appIDs"</span>: [<span class="st">"&lt;TEAM_ID&gt;.com.example.taskboard"</span>], <span class="st">"components"</span>: [{ <span class="st">"/"</span>: <span class="st">"/board/*"</span> }] }] } }</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ THEME + ADAPTIVE + L10N/RTL ═══════════════════ -->
+<div id="theme" class="section">
+  <div class="hero">
+    <div class="hero-tag">UI Infrastructure</div>
+    <h2>ThemeCubit · Responsive AdaptiveScaffold · l10n &amp; RTL</h2>
+    <p>Light/Dark persistence, Mobile vs Web/Tablet adaptive navigation, and bilingual EN/AR with strict RTL discipline.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'th-theme')">AppTheme + ThemeCubit</button>
+    <button class="tab" onclick="switchTab(this,'th-resp')">Responsive + AdaptiveScaffold</button>
+    <button class="tab" onclick="switchTab(this,'th-l10n')">l10n + LocaleCubit + RTL</button>
+  </div>
+
+  <div id="th-theme" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/theme/app_theme.dart + theme_cubit.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">AppTheme</span> {
+  <span class="kw">static const</span> _primary = <span class="cls">Color</span>(<span class="nu">0xFF6366F1</span>), _secondary = <span class="cls">Color</span>(<span class="nu">0xFF818CF8</span>), _error = <span class="cls">Color</span>(<span class="nu">0xFFEF4444</span>);
+  <span class="kw">static</span> <span class="cls">ThemeData</span> <span class="kw">get</span> light =&gt; <span class="fn">_build</span>(<span class="kw">const</span> <span class="cls">ColorScheme</span>.light(primary: _primary, secondary: _secondary, surface: <span class="cls">Color</span>(<span class="nu">0xFFFFFFFF</span>), error: _error));
+  <span class="kw">static</span> <span class="cls">ThemeData</span> <span class="kw">get</span> dark =&gt; <span class="fn">_build</span>(<span class="kw">const</span> <span class="cls">ColorScheme</span>.dark(primary: _primary, secondary: _secondary, surface: <span class="cls">Color</span>(<span class="nu">0xFF1A1D2E</span>), error: _error));
+
+  <span class="kw">static</span> <span class="cls">ThemeData</span> <span class="fn">_build</span>(<span class="cls">ColorScheme</span> cs) =&gt; <span class="cls">ThemeData</span>(
+        useMaterial3: <span class="kw">true</span>, colorScheme: cs,
+        appBarTheme: <span class="kw">const</span> <span class="cls">AppBarTheme</span>(elevation: <span class="nu">0</span>, centerTitle: <span class="kw">false</span>),
+        cardTheme: <span class="cls">CardThemeData</span>(elevation: <span class="nu">0</span>, shape: <span class="cls">RoundedRectangleBorder</span>(borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(<span class="nu">12</span>))),
+      );
+}
+
+@lazySingleton
+<span class="kw">class</span> <span class="cls">ThemeCubit</span> <span class="kw">extends</span> <span class="cls">Cubit</span>&lt;<span class="cls">ThemeMode</span>&gt; {
+  <span class="cls">ThemeCubit</span>(<span class="kw">this</span>._prefs) : <span class="kw">super</span>(<span class="cls">ThemeMode</span>.values.<span class="fn">elementAt</span>(_prefs.<span class="fn">getInt</span>(_key) ?? <span class="nu">0</span>));
+  <span class="kw">static const</span> _key = <span class="st">'theme_mode'</span>;
+  <span class="kw">final</span> <span class="cls">SharedPreferences</span> _prefs;
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setMode</span>(<span class="cls">ThemeMode</span> mode) <span class="kw">async</span> { <span class="kw">await</span> _prefs.<span class="fn">setInt</span>(_key, mode.index); <span class="fn">emit</span>(mode); }
+}</pre>
+    </div>
+  </div>
+
+  <div id="th-resp" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">common/layouts/responsive_layout.dart + adaptive_scaffold.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">ResponsiveLayout</span> <span class="kw">extends</span> <span class="cls">StatelessWidget</span> {
+  <span class="kw">const</span> <span class="cls">ResponsiveLayout</span>({<span class="kw">super</span>.key, <span class="kw">required</span> <span class="kw">this</span>.mobile, <span class="kw">this</span>.tablet, <span class="kw">required</span> <span class="kw">this</span>.desktop});
+  <span class="kw">final</span> <span class="cls">Widget</span> mobile, desktop; <span class="kw">final</span> <span class="cls">Widget</span>? tablet;
+  @<span class="kw">override</span>
+  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) =&gt; <span class="cls">LayoutBuilder</span>(builder: (_, c) {
+        <span class="kw">if</span> (c.maxWidth &gt;= <span class="nu">1024</span>) <span class="kw">return</span> desktop;
+        <span class="kw">if</span> (c.maxWidth &gt;= <span class="nu">600</span>) <span class="kw">return</span> tablet ?? desktop;
+        <span class="kw">return</span> mobile;
+      });
+}
+
+<span class="kw">class</span> <span class="cls">AdaptiveScaffold</span> <span class="kw">extends</span> <span class="cls">StatelessWidget</span> {
+  <span class="kw">const</span> <span class="cls">AdaptiveScaffold</span>({<span class="kw">super</span>.key, <span class="kw">required</span> <span class="kw">this</span>.selectedIndex, <span class="kw">required</span> <span class="kw">this</span>.onSelected, <span class="kw">required</span> <span class="kw">this</span>.destinations, <span class="kw">required</span> <span class="kw">this</span>.body});
+  <span class="kw">final</span> <span class="ty">int</span> selectedIndex; <span class="kw">final</span> <span class="cls">ValueChanged</span>&lt;<span class="ty">int</span>&gt; onSelected;
+  <span class="kw">final</span> <span class="ty">List</span>&lt;<span class="cls">NavigationDestination</span>&gt; destinations; <span class="kw">final</span> <span class="cls">Widget</span> body;
+
+  @<span class="kw">override</span>
+  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+    <span class="kw">final</span> wide = <span class="cls">MediaQuery</span>.<span class="fn">sizeOf</span>(context).width &gt;= <span class="nu">600</span>;
+    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+      body: wide
+          ? <span class="cls">Row</span>(children: [
+              <span class="cls">NavigationRail</span>(
+                selectedIndex: selectedIndex, onDestinationSelected: onSelected,
+                destinations: [<span class="kw">for</span> (<span class="kw">final</span> d <span class="kw">in</span> destinations) <span class="cls">NavigationRailDestination</span>(icon: d.icon, selectedIcon: d.selectedIcon, label: <span class="cls">Text</span>(d.label))],
+              ),
+              <span class="kw">const</span> <span class="cls">VerticalDivider</span>(width: <span class="nu">1</span>),
+              <span class="cls">Expanded</span>(child: body),
+            ])
+          : body,
+      bottomNavigationBar: wide ? <span class="kw">null</span> : <span class="cls">NavigationBar</span>(selectedIndex: selectedIndex, onDestinationSelected: onSelected, destinations: destinations),
+    );
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="th-l10n" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML + ARB + DART</span>
+        <span class="code-file">l10n.yaml + app_en.arb / app_ar.arb + core/l10n/locale_cubit.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># l10n.yaml</span>
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-dir: lib/l10n/generated
+nullable-getter: <span class="kw">false</span>
+
+<span class="cm">// core/l10n/locale_cubit.dart</span>
+@lazySingleton
+<span class="kw">class</span> <span class="cls">LocaleCubit</span> <span class="kw">extends</span> <span class="cls">Cubit</span>&lt;<span class="cls">Locale</span>?&gt; {
+  <span class="cls">LocaleCubit</span>(<span class="kw">this</span>._prefs) : <span class="kw">super</span>(_read(_prefs));
+  <span class="kw">static const</span> _key = <span class="st">'locale_code'</span>;
+  <span class="kw">final</span> <span class="cls">SharedPreferences</span> _prefs;
+  <span class="kw">static</span> <span class="cls">Locale</span>? <span class="fn">_read</span>(<span class="cls">SharedPreferences</span> p) { <span class="kw">final</span> c = p.<span class="fn">getString</span>(_key); <span class="kw">return</span> c == <span class="kw">null</span> ? <span class="kw">null</span> : <span class="cls">Locale</span>(c); }
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setLocale</span>(<span class="cls">Locale</span>? l) <span class="kw">async</span> {
+    <span class="kw">if</span> (l == <span class="kw">null</span>) { <span class="kw">await</span> _prefs.<span class="fn">remove</span>(_key); } <span class="kw">else</span> { <span class="kw">await</span> _prefs.<span class="fn">setString</span>(_key, l.languageCode); }
+    <span class="fn">emit</span>(l);
+  }
+}
+
+<span class="cm">// RTL Rules: ALWAYS use EdgeInsetsDirectional / AlignmentDirectional / BorderRadiusDirectional.</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ERRORS + GLOBAL HANDLERS ═══════════════════ -->
+<div id="errors" class="section">
+  <div class="hero">
+    <div class="hero-tag">Error Handling &amp; Crash Reporting</div>
+    <h2>Sealed AppFailure · Static AppLogger · ErrorReporter · Global Handlers</h2>
+    <p>Web-safe reporting, exhaustive <code>switch</code> mapping, localized user errors, and zero uncaught crashes.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'er-fail')">AppFailure + AppLogger</button>
+    <button class="tab" onclick="switchTab(this,'er-global')">ErrorReporter + Global Handlers</button>
+    <button class="tab" onclick="switchTab(this,'er-map')">Exception Mapper + l10n</button>
+    <button class="tab" onclick="switchTab(this,'er-ui')">ErrorView + SnackBar</button>
+  </div>
+
+  <div id="er-fail" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/errors/failures.dart + core/utils/app_logger.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">sealed class</span> <span class="cls">AppFailure</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">AppFailure</span>(<span class="kw">this</span>.message);
+  <span class="kw">final</span> <span class="ty">String</span> message;
+  @<span class="kw">override</span> <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [message];
+}
+<span class="kw">final class</span> <span class="cls">NetworkFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">NetworkFailure</span>() : <span class="kw">super</span>(<span class="st">'network'</span>); }
+<span class="kw">final class</span> <span class="cls">PermissionFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">PermissionFailure</span>() : <span class="kw">super</span>(<span class="st">'permission-denied'</span>); }
+<span class="kw">final class</span> <span class="cls">NotFoundFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">NotFoundFailure</span>() : <span class="kw">super</span>(<span class="st">'not-found'</span>); }
+<span class="kw">final class</span> <span class="cls">CancelledFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">CancelledFailure</span>() : <span class="kw">super</span>(<span class="st">'cancelled'</span>); }
+<span class="kw">final class</span> <span class="cls">CacheFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">CacheFailure</span>(<span class="kw">super</span>.message); }
+<span class="kw">final class</span> <span class="cls">FirebaseFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">FirebaseFailure</span>(<span class="kw">super</span>.message); }
+<span class="kw">final class</span> <span class="cls">ValidationFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">ValidationFailure</span>(<span class="kw">super</span>.message); }
+<span class="kw">final class</span> <span class="cls">AuthFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">AuthFailure</span>(<span class="kw">this</span>.code) : <span class="kw">super</span>(<span class="st">'auth/$code'</span>); <span class="kw">final</span> <span class="ty">String</span> code; }
+<span class="kw">final class</span> <span class="cls">UnknownFailure</span> <span class="kw">extends</span> <span class="cls">AppFailure</span> { <span class="kw">const</span> <span class="cls">UnknownFailure</span>(<span class="kw">super</span>.message); }
+
+<span class="kw">abstract final class</span> <span class="cls">AppLogger</span> {
+  <span class="kw">static void</span> <span class="fn">info</span>(<span class="ty">String</span> m, {<span class="ty">String</span>? tag}) { <span class="kw">if</span> (kDebugMode) <span class="fn">debugPrint</span>(<span class="st">'[${tag ?? 'App'}] $m'</span>); }
+  <span class="kw">static void</span> <span class="fn">warning</span>(<span class="ty">String</span> m) { <span class="kw">if</span> (kDebugMode) <span class="fn">debugPrint</span>(<span class="st">'[Warning] $m'</span>); }
+  <span class="kw">static void</span> <span class="fn">error</span>(<span class="ty">String</span> m, {<span class="ty">Object</span>? error, <span class="cls">StackTrace</span>? stack}) {
+    <span class="kw">if</span> (kDebugMode) <span class="fn">debugPrint</span>(<span class="st">'[Error] $m: $error'</span>);
+    <span class="kw">if</span> (error != <span class="kw">null</span>) <span class="fn">unawaited</span>(sl&lt;<span class="cls">ErrorReporter</span>&gt;().<span class="fn">record</span>(error, stack, reason: m));
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="er-global" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/errors/error_reporter.dart + global_error_handlers.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">abstract interface class</span> <span class="cls">ErrorReporter</span> {
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">record</span>(<span class="ty">Object</span> error, <span class="cls">StackTrace</span>? stack, {<span class="ty">bool</span> fatal = <span class="kw">false</span>, <span class="ty">String</span>? reason});
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">recordFlutterError</span>(<span class="cls">FlutterErrorDetails</span> details);
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setUser</span>(<span class="ty">String</span>? uid);
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setKey</span>(<span class="ty">String</span> key, <span class="ty">Object</span> value);
+}
+
+<span class="kw">class</span> <span class="cls">CrashlyticsErrorReporter</span> <span class="kw">implements</span> <span class="cls">ErrorReporter</span> {
+  <span class="kw">final</span> _c = <span class="cls">FirebaseCrashlytics</span>.instance;
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">record</span>(<span class="ty">Object</span> e, <span class="cls">StackTrace</span>? s, {<span class="ty">bool</span> fatal = <span class="kw">false</span>, <span class="ty">String</span>? reason}) =&gt; _c.<span class="fn">recordError</span>(e, s, fatal: fatal, reason: reason);
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">recordFlutterError</span>(<span class="cls">FlutterErrorDetails</span> d) =&gt; _c.<span class="fn">recordFlutterFatalError</span>(d);
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setUser</span>(<span class="ty">String</span>? uid) =&gt; _c.<span class="fn">setUserIdentifier</span>(uid ?? <span class="st">''</span>);
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setKey</span>(<span class="ty">String</span> k, <span class="ty">Object</span> v) =&gt; _c.<span class="fn">setCustomKey</span>(k, v);
+}
+
+<span class="kw">class</span> <span class="cls">WebErrorReporter</span> <span class="kw">implements</span> <span class="cls">ErrorReporter</span> {
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">record</span>(<span class="ty">Object</span> e, <span class="cls">StackTrace</span>? s, {<span class="ty">bool</span> fatal = <span class="kw">false</span>, <span class="ty">String</span>? reason}) <span class="kw">async</span> =&gt; <span class="fn">debugPrint</span>(<span class="st">'$reason $e'</span>);
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">recordFlutterError</span>(<span class="cls">FlutterErrorDetails</span> d) <span class="kw">async</span> =&gt; <span class="cls">FlutterError</span>.<span class="fn">dumpErrorToConsole</span>(d);
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setUser</span>(<span class="ty">String</span>? uid) <span class="kw">async</span> {}
+  @<span class="kw">override</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">setKey</span>(<span class="ty">String</span> k, <span class="ty">Object</span> v) <span class="kw">async</span> {}
+}
+
+<span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">installGlobalErrorHandlers</span>(<span class="cls">ErrorReporter</span> reporter) <span class="kw">async</span> {
+  <span class="kw">if</span> (!kIsWeb) <span class="kw">await</span> <span class="cls">FirebaseCrashlytics</span>.instance.<span class="fn">setCrashlyticsCollectionEnabled</span>(kReleaseMode &amp;&amp; !<span class="cls">AppConfig</span>.instance.isDev);
+  <span class="cls">FlutterError</span>.onError = (d) { <span class="cls">FlutterError</span>.<span class="fn">presentError</span>(d); <span class="fn">unawaited</span>(reporter.<span class="fn">recordFlutterError</span>(d)); };
+  <span class="cls">PlatformDispatcher</span>.instance.onError = (e, s) { <span class="fn">unawaited</span>(reporter.<span class="fn">record</span>(e, s, fatal: <span class="kw">true</span>)); <span class="kw">return true</span>; };
+  <span class="cls">ErrorWidget</span>.builder = (d) =&gt; kReleaseMode ? <span class="kw">const</span> <span class="cls">FriendlyErrorWidget</span>() : <span class="cls">ErrorWidget</span>(d.exception);
+}</pre>
+    </div>
+  </div>
+
+  <div id="er-map" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/errors/exception_mapper.dart + failure_l10n.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">extension</span> <span class="cls">FirebaseAuthExceptionX</span> <span class="kw">on</span> <span class="cls">FirebaseAuthException</span> {
+  <span class="cls">AppFailure</span> <span class="fn">toFailure</span>() =&gt; <span class="kw">switch</span> (code) {
+        <span class="st">'invalid-credential'</span> || <span class="st">'wrong-password'</span> || <span class="st">'user-not-found'</span> =&gt; <span class="kw">const</span> <span class="cls">AuthFailure</span>(<span class="st">'invalid-credential'</span>),
+        <span class="st">'network-request-failed'</span> =&gt; <span class="kw">const</span> <span class="cls">NetworkFailure</span>(),
+        _ =&gt; <span class="cls">AuthFailure</span>(code),
+      };
+}
+
+<span class="kw">extension</span> <span class="cls">FirebaseExceptionX</span> <span class="kw">on</span> <span class="cls">FirebaseException</span> {
+  <span class="cls">AppFailure</span> <span class="fn">toFailure</span>() =&gt; <span class="kw">switch</span> (code) {
+        <span class="st">'unavailable'</span> || <span class="st">'deadline-exceeded'</span> =&gt; <span class="kw">const</span> <span class="cls">NetworkFailure</span>(),
+        <span class="st">'permission-denied'</span> =&gt; <span class="kw">const</span> <span class="cls">PermissionFailure</span>(),
+        <span class="st">'not-found'</span> =&gt; <span class="kw">const</span> <span class="cls">NotFoundFailure</span>(),
+        _ =&gt; <span class="cls">FirebaseFailure</span>(message ?? code),
+      };
+}
+
+<span class="kw">extension</span> <span class="cls">AppFailureL10n</span> <span class="kw">on</span> <span class="cls">AppFailure</span> {
+  <span class="ty">String</span> <span class="fn">localize</span>(<span class="cls">BuildContext</span> context) {
+    <span class="kw">final</span> l = <span class="cls">AppLocalizations</span>.<span class="fn">of</span>(context);
+    <span class="kw">return</span> <span class="kw">switch</span> (<span class="kw">this</span>) {
+      <span class="cls">NetworkFailure</span>() =&gt; l.errorNoInternet,
+      <span class="cls">PermissionFailure</span>() =&gt; l.errorNoPermission,
+      <span class="cls">NotFoundFailure</span>() =&gt; l.errorNotFound,
+      <span class="cls">CancelledFailure</span>() =&gt; <span class="st">''</span>,
+      <span class="cls">ValidationFailure</span>(:<span class="kw">final</span> message) =&gt; message,
+      <span class="cls">AuthFailure</span>(:<span class="kw">final</span> code) =&gt; <span class="kw">switch</span> (code) {
+          <span class="st">'invalid-credential'</span> =&gt; l.authInvalidCredential,
+          <span class="st">'email-already-in-use'</span> =&gt; l.authEmailInUse,
+          <span class="st">'weak-password'</span> =&gt; l.authWeakPassword,
+          <span class="st">'too-many-requests'</span> =&gt; l.authTooManyRequests,
+          <span class="st">'user-disabled'</span> =&gt; l.authUserDisabled,
+          _ =&gt; l.errorGeneric,
+        },
+      <span class="cls">FirebaseFailure</span>() || <span class="cls">CacheFailure</span>() || <span class="cls">UnknownFailure</span>() =&gt; l.errorGeneric,
+    };
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="er-ui" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/widgets/error_view.dart + app_snack_bar.dart + friendly_error_widget.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">class</span> <span class="cls">ErrorView</span> <span class="kw">extends</span> <span class="cls">StatelessWidget</span> {
+  <span class="kw">const</span> <span class="cls">ErrorView</span>({<span class="kw">super</span>.key, <span class="kw">required</span> <span class="kw">this</span>.failure, <span class="kw">this</span>.onRetry});
+  <span class="kw">final</span> <span class="cls">AppFailure</span> failure; <span class="kw">final</span> <span class="cls">VoidCallback</span>? onRetry;
+  @<span class="kw">override</span>
+  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+    <span class="kw">final</span> t = <span class="cls">Theme</span>.<span class="fn">of</span>(context);
+    <span class="kw">final</span> canRetry = onRetry != <span class="kw">null</span> &amp;&amp; failure <span class="kw">is</span>! <span class="cls">PermissionFailure</span> &amp;&amp; failure <span class="kw">is</span>! <span class="cls">NotFoundFailure</span>;
+    <span class="kw">return</span> <span class="cls">Center</span>(
+      child: <span class="cls">Padding</span>(
+        padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(<span class="nu">24</span>),
+        child: <span class="cls">Column</span>(mainAxisSize: <span class="cls">MainAxisSize</span>.min, children: [
+          <span class="cls">Icon</span>(<span class="cls">Icons</span>.error_outline_rounded, size: <span class="nu">48</span>, color: t.colorScheme.onSurfaceVariant),
+          <span class="kw">const</span> <span class="cls">SizedBox</span>(height: <span class="nu">16</span>),
+          <span class="cls">Text</span>(failure.<span class="fn">localize</span>(context), textAlign: <span class="cls">TextAlign</span>.center, style: t.textTheme.bodyLarge),
+          <span class="kw">if</span> (canRetry) ...[
+            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: <span class="nu">16</span>),
+            <span class="cls">FilledButton</span>.<span class="fn">tonalIcon</span>(onPressed: onRetry, icon: <span class="kw">const</span> <span class="cls">Icon</span>(<span class="cls">Icons</span>.refresh_rounded), label: <span class="cls">Text</span>(<span class="cls">AppLocalizations</span>.<span class="fn">of</span>(context).retry)),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+<span class="kw">abstract final class</span> <span class="cls">AppSnackBar</span> {
+  <span class="kw">static void</span> <span class="fn">error</span>(<span class="cls">BuildContext</span> c, <span class="ty">String</span> m) {
+    <span class="kw">if</span> (m.isEmpty) <span class="kw">return</span>;
+    <span class="kw">final</span> cs = <span class="cls">Theme</span>.<span class="fn">of</span>(c).colorScheme;
+    <span class="cls">ScaffoldMessenger</span>.<span class="fn">of</span>(c)..<span class="fn">hideCurrentSnackBar</span>()..<span class="fn">showSnackBar</span>(<span class="cls">SnackBar</span>(content: <span class="cls">Text</span>(m, style: <span class="cls">TextStyle</span>(color: cs.onError)), backgroundColor: cs.error, behavior: <span class="cls">SnackBarBehavior</span>.floating));
+  }
+}
+
+<span class="kw">class</span> <span class="cls">FriendlyErrorWidget</span> <span class="kw">extends</span> <span class="cls">StatelessWidget</span> {
+  <span class="kw">const</span> <span class="cls">FriendlyErrorWidget</span>({<span class="kw">super</span>.key});
+  @<span class="kw">override</span>
+  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> _) =&gt; <span class="kw">const</span> <span class="cls">ColoredBox</span>(color: <span class="cls">Color</span>(<span class="nu">0xFFF5F5F7</span>), child: <span class="cls">Center</span>(child: <span class="cls">Icon</span>(<span class="cls">Icons</span>.error_outline_rounded, size: <span class="nu">40</span>)));
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FULL AUTH ═══════════════════ -->
+<div id="auth" class="section">
+  <div class="hero">
+    <div class="hero-tag">Firebase Auth</div>
+    <h2>Google · Apple (Nonce) · Phone OTP · Email · Delete Account + AuthBloc</h2>
+    <p>Includes <code>AuthBloc</code>, live Firestore user profile streaming, Apple Sign-In SHA-256 nonce, safe Sign-Out (FCM + cache wipe), and App Store compliant <code>deleteAccount</code>.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'au-ds')">AuthRemoteDatasource (All Methods)</button>
+    <button class="tab" onclick="switchTab(this,'au-bloc')">AuthBloc &amp; AuthState</button>
+  </div>
+
+  <div id="au-ds" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/auth/data/datasources/auth_remote_datasource.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@<span class="cls">LazySingleton</span>(<span class="kw">as</span>: <span class="cls">AuthRemoteDatasource</span>)
+<span class="kw">class</span> <span class="cls">AuthRemoteDatasourceImpl</span> <span class="kw">implements</span> <span class="cls">AuthRemoteDatasource</span> {
+  <span class="kw">const</span> <span class="cls">AuthRemoteDatasourceImpl</span>(<span class="kw">this</span>._auth, <span class="kw">this</span>._firestore);
+  <span class="kw">final</span> <span class="cls">FirebaseAuth</span> _auth; <span class="kw">final</span> <span class="cls">FirebaseFirestore</span> _firestore;
+
+  @<span class="kw">override</span>
+  <span class="ty">Stream</span>&lt;<span class="cls">UserModel</span>?&gt; <span class="fn">watchAuthState</span>() =&gt; _auth.<span class="fn">authStateChanges</span>().<span class="fn">asyncExpand</span>((user) {
+        <span class="kw">if</span> (user == <span class="kw">null</span>) <span class="kw">return</span> <span class="ty">Stream</span>.<span class="fn">value</span>(<span class="kw">null</span>);
+        <span class="kw">return</span> _firestore.<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(user.uid).<span class="fn">snapshots</span>().<span class="fn">map</span>(
+              (doc) =&gt; doc.exists ? <span class="cls">UserModel</span>.<span class="fn">fromFirestore</span>(doc) : <span class="cls">UserModel</span>.<span class="fn">fromFirebaseUser</span>(user),
+            );
+      });
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">signInWithGoogle</span>() <span class="kw">async</span> {
+    <span class="kw">final</span> googleUser = <span class="kw">await</span> <span class="cls">GoogleSignIn</span>().<span class="fn">signIn</span>();
+    <span class="kw">if</span> (googleUser == <span class="kw">null</span>) <span class="kw">throw</span> <span class="kw">const</span> <span class="cls">CancelledException</span>();
+    <span class="kw">final</span> ga = <span class="kw">await</span> googleUser.authentication;
+    <span class="kw">final</span> cred = <span class="kw">await</span> _auth.<span class="fn">signInWithCredential</span>(<span class="cls">GoogleAuthProvider</span>.<span class="fn">credential</span>(accessToken: ga.accessToken, idToken: ga.idToken));
+    <span class="kw">return</span> <span class="fn">_upsertUser</span>(cred.user!);
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">signInWithApple</span>() <span class="kw">async</span> {
+    <span class="kw">final</span> rawNonce = <span class="fn">generateNonce</span>();
+    <span class="kw">final</span> sha256Nonce = sha256.<span class="fn">convert</span>(utf8.<span class="fn">encode</span>(rawNonce)).<span class="fn">toString</span>();
+    <span class="kw">final</span> appleCred = <span class="kw">await</span> <span class="cls">SignInWithApple</span>.<span class="fn">getAppleIDCredential</span>(
+      scopes: [<span class="cls">AppleIDAuthorizationScopes</span>.email, <span class="cls">AppleIDAuthorizationScopes</span>.fullName], nonce: sha256Nonce,
+    );
+    <span class="kw">final</span> cred = <span class="kw">await</span> _auth.<span class="fn">signInWithCredential</span>(<span class="cls">OAuthProvider</span>(<span class="st">'apple.com'</span>).<span class="fn">credential</span>(idToken: appleCred.identityToken, rawNonce: rawNonce));
+    <span class="kw">final</span> fullName = [appleCred.givenName, appleCred.familyName].<span class="fn">whereType</span>&lt;<span class="ty">String</span>&gt;().<span class="fn">join</span>(<span class="st">' '</span>).<span class="fn">trim</span>();
+    <span class="kw">return</span> <span class="fn">_upsertUser</span>(cred.user!, displayName: fullName.isEmpty ? <span class="kw">null</span> : fullName);
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="ty">String</span>&gt; <span class="fn">sendOtp</span>(<span class="ty">String</span> phoneNumber) {
+    <span class="kw">final</span> completer = <span class="cls">Completer</span>&lt;<span class="ty">String</span>&gt;();
+    <span class="fn">unawaited</span>(_auth.<span class="fn">verifyPhoneNumber</span>(
+      phoneNumber: phoneNumber, timeout: <span class="kw">const</span> <span class="ty">Duration</span>(seconds: <span class="nu">60</span>),
+      verificationCompleted: (_) {},
+      verificationFailed: (e) { <span class="kw">if</span> (!completer.isCompleted) completer.<span class="fn">completeError</span>(e); },
+      codeSent: (id, _) { <span class="kw">if</span> (!completer.isCompleted) completer.<span class="fn">complete</span>(id); },
+      codeAutoRetrievalTimeout: (_) {},
+    ));
+    <span class="kw">return</span> completer.future;
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">verifyOtp</span>({<span class="kw">required</span> <span class="ty">String</span> verificationId, <span class="kw">required</span> <span class="ty">String</span> otp}) <span class="kw">async</span> {
+    <span class="kw">final</span> cred = <span class="kw">await</span> _auth.<span class="fn">signInWithCredential</span>(<span class="cls">PhoneAuthProvider</span>.<span class="fn">credential</span>(verificationId: verificationId, smsCode: otp.<span class="fn">trim</span>()));
+    <span class="kw">return</span> <span class="fn">_upsertUser</span>(cred.user!);
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">signInWithEmail</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password}) <span class="kw">async</span> {
+    <span class="kw">final</span> cred = <span class="kw">await</span> _auth.<span class="fn">signInWithEmailAndPassword</span>(email: email.<span class="fn">trim</span>(), password: password);
+    <span class="kw">return</span> <span class="fn">_upsertUser</span>(cred.user!);
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">signUpWithEmail</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password}) <span class="kw">async</span> {
+    <span class="kw">final</span> cred = <span class="kw">await</span> _auth.<span class="fn">createUserWithEmailAndPassword</span>(email: email.<span class="fn">trim</span>(), password: password);
+    <span class="kw">return</span> <span class="fn">_upsertUser</span>(cred.user!);
+  }
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">sendPasswordReset</span>(<span class="ty">String</span> email) =&gt; _auth.<span class="fn">sendPasswordResetEmail</span>(email: email.<span class="fn">trim</span>());
+
+  @<span class="kw">override</span>
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">deleteAccount</span>() <span class="kw">async</span> {
+    <span class="kw">final</span> user = _auth.currentUser;
+    <span class="kw">if</span> (user != <span class="kw">null</span>) <span class="kw">await</span> user.<span class="fn">delete</span>();
+  }
+
+  <span class="ty">Future</span>&lt;<span class="cls">UserModel</span>&gt; <span class="fn">_upsertUser</span>(<span class="cls">User</span> user, {<span class="ty">String</span>? displayName}) <span class="kw">async</span> {
+    <span class="kw">final</span> ref = _firestore.<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(user.uid);
+    <span class="kw">await</span> ref.<span class="fn">set</span>({
+      <span class="st">'id'</span>: user.uid, <span class="st">'name'</span>: displayName ?? user.displayName, <span class="st">'email'</span>: user.email,
+      <span class="st">'phone'</span>: user.phoneNumber, <span class="st">'photoUrl'</span>: user.photoURL, <span class="st">'lastSignIn'</span>: <span class="cls">FieldValue</span>.<span class="fn">serverTimestamp</span>(),
+    }, <span class="cls">SetOptions</span>(merge: <span class="kw">true</span>));
+    <span class="kw">return</span> <span class="cls">UserModel</span>.<span class="fn">fromFirestore</span>(<span class="kw">await</span> ref.<span class="fn">get</span>());
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="au-bloc" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">features/auth/presentation/bloc/auth_bloc.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">enum</span> <span class="cls">AuthStatus</span> { unknown, authenticated, unauthenticated, loading, failure }
+
+<span class="kw">class</span> <span class="cls">AuthState</span> <span class="kw">extends</span> <span class="cls">Equatable</span> {
+  <span class="kw">const</span> <span class="cls">AuthState</span>({<span class="kw">this</span>.status = <span class="cls">AuthStatus</span>.unknown, <span class="kw">this</span>.user, <span class="kw">this</span>.verificationId, <span class="kw">this</span>.failure});
+  <span class="kw">final</span> <span class="cls">AuthStatus</span> status; <span class="kw">final</span> <span class="cls">UserEntity</span>? user; <span class="kw">final</span> <span class="ty">String</span>? verificationId; <span class="kw">final</span> <span class="cls">AppFailure</span>? failure;
+  @<span class="kw">override</span> <span class="ty">List</span>&lt;<span class="ty">Object</span>?&gt; <span class="kw">get</span> props =&gt; [status, user, verificationId, failure];
+}
+
+@lazySingleton
+<span class="kw">class</span> <span class="cls">AuthBloc</span> <span class="kw">extends</span> <span class="cls">Bloc</span>&lt;<span class="cls">AuthEvent</span>, <span class="cls">AuthState</span>&gt; {
+  <span class="cls">AuthBloc</span>(<span class="kw">this</span>._repo, <span class="kw">this</span>._fcm, <span class="kw">this</span>._reporter) : <span class="kw">super</span>(<span class="kw">const</span> <span class="cls">AuthState</span>()) {
+    on&lt;<span class="cls">AuthWatchStarted</span>&gt;(_onWatch);
+    on&lt;<span class="cls">SignOutRequested</span>&gt;(_onSignOut);
+  }
+  <span class="kw">final</span> <span class="cls">AuthRepository</span> _repo; <span class="kw">final</span> <span class="cls">FcmService</span> _fcm; <span class="kw">final</span> <span class="cls">ErrorReporter</span> _reporter;
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onWatch</span>(<span class="cls">AuthWatchStarted</span> _, <span class="cls">Emitter</span>&lt;<span class="cls">AuthState</span>&gt; emit) =&gt; emit.<span class="fn">forEach</span>(
+        _repo.<span class="fn">watchAuthState</span>(),
+        onData: (user) {
+          <span class="fn">unawaited</span>(_reporter.<span class="fn">setUser</span>(user?.id));
+          <span class="kw">if</span> (user != <span class="kw">null</span>) <span class="fn">unawaited</span>(_fcm.<span class="fn">initialize</span>(user.id));
+          <span class="kw">return</span> user == <span class="kw">null</span>
+              ? <span class="kw">const</span> <span class="cls">AuthState</span>(status: <span class="cls">AuthStatus</span>.unauthenticated)
+              : <span class="cls">AuthState</span>(status: <span class="cls">AuthStatus</span>.authenticated, user: user);
+        },
+      );
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onSignOut</span>(<span class="cls">SignOutRequested</span> _, <span class="cls">Emitter</span>&lt;<span class="cls">AuthState</span>&gt; emit) <span class="kw">async</span> {
+    <span class="kw">final</span> uid = state.user?.id;
+    <span class="kw">if</span> (uid != <span class="kw">null</span>) <span class="kw">await</span> _fcm.<span class="fn">removeToken</span>(uid);
+    _fcm.<span class="fn">dispose</span>();
+    <span class="kw">await</span> _repo.<span class="fn">signOut</span>();
+  }
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FIRESTORE RULES + INDEXES + FUNCTIONS ═══════════════════ -->
+<div id="firestore" class="section">
+  <div class="hero">
+    <div class="hero-tag">Firebase Backend</div>
+    <h2>firebase.json · Rules · Indexes · Cloud Functions v2</h2>
+    <p>Hardened rules (with <code>firestore.exists</code> + schema checks), composite indexes, and TypeScript Cloud Functions v2.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'fs-config')">firebase.json (Headers) + Indexes</button>
+    <button class="tab" onclick="switchTab(this,'fs-rules')">Hardened Firestore Rules</button>
+    <button class="tab" onclick="switchTab(this,'fs-storage')">Storage Rules</button>
+    <button class="tab" onclick="switchTab(this,'fs-fn')">Cloud Functions + Rules Tests</button>
+  </div>
+
+  <div id="fs-config" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">JSON</span>
+        <span class="code-file">firebase.json (with Web security headers) + firebase/firestore.indexes.json</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>{
+  <span class="st">"firestore"</span>: { <span class="st">"rules"</span>: <span class="st">"firebase/firestore.rules"</span>, <span class="st">"indexes"</span>: <span class="st">"firebase/firestore.indexes.json"</span> },
+  <span class="st">"storage"</span>: { <span class="st">"rules"</span>: <span class="st">"firebase/storage.rules"</span> },
+  <span class="st">"functions"</span>: [{ <span class="st">"source"</span>: <span class="st">"firebase/functions"</span>, <span class="st">"codebase"</span>: <span class="st">"default"</span> }],
+  <span class="st">"hosting"</span>: {
+    <span class="st">"public"</span>: <span class="st">"build/web"</span>,
+    <span class="st">"rewrites"</span>: [{ <span class="st">"source"</span>: <span class="st">"**"</span>, <span class="st">"destination"</span>: <span class="st">"/index.html"</span> }],
+    <span class="st">"headers"</span>: [{
+      <span class="st">"source"</span>: <span class="st">"**"</span>,
+      <span class="st">"headers"</span>: [
+        { <span class="st">"key"</span>: <span class="st">"X-Frame-Options"</span>, <span class="st">"value"</span>: <span class="st">"DENY"</span> },
+        { <span class="st">"key"</span>: <span class="st">"X-Content-Type-Options"</span>, <span class="st">"value"</span>: <span class="st">"nosniff"</span> },
+        { <span class="st">"key"</span>: <span class="st">"Referrer-Policy"</span>, <span class="st">"value"</span>: <span class="st">"strict-origin-when-cross-origin"</span> }
+      ]
+    }]
+  }
+}
+
+<span class="cm">// firebase/firestore.indexes.json</span>
+{
+  <span class="st">"indexes"</span>: [{
+    <span class="st">"collectionGroup"</span>: <span class="st">"boards"</span>, <span class="st">"queryScope"</span>: <span class="st">"COLLECTION"</span>,
+    <span class="st">"fields"</span>: [{ <span class="st">"fieldPath"</span>: <span class="st">"memberIds"</span>, <span class="st">"arrayConfig"</span>: <span class="st">"CONTAINS"</span> }, { <span class="st">"fieldPath"</span>: <span class="st">"updatedAt"</span>, <span class="st">"order"</span>: <span class="st">"DESCENDING"</span> }]
+  }]
+}</pre>
+    </div>
+  </div>
+
+  <div id="fs-rules" class="tab-content">
+    <div class="box box-warn"><strong>Anti-Hacking Rules:</strong> Never let clients write <code>isPro</code>/<code>role</code>/<code>boardCount</code>, block collection scraping (<code>allow list: if false</code> on profiles), and enforce <code>hasOnly</code> + <code>size()</code> limits on every create &amp; update.</div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">RULES</span>
+        <span class="code-file">firebase/firestore.rules (Hardened against Privilege Escalation, Scraping &amp; Payload Abuse)</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">rules_version</span> = <span class="st">'2'</span>;
+<span class="kw">service</span> cloud.firestore {
+  <span class="kw">match</span> /databases/{database}/documents {
+    <span class="kw">function</span> <span class="fn">isSignedIn</span>() { <span class="kw">return</span> request.auth != null; }
+    <span class="kw">function</span> <span class="fn">isOwner</span>(userId) { <span class="kw">return</span> <span class="fn">isSignedIn</span>() &amp;&amp; request.auth.uid == userId; }
+    <span class="kw">function</span> <span class="fn">isMember</span>(boardData) { <span class="kw">return</span> <span class="fn">isSignedIn</span>() &amp;&amp; request.auth.uid <span class="kw">in</span> boardData.memberIds; }
+    <span class="kw">function</span> <span class="fn">unchanged</span>(fields) { <span class="kw">return</span> !request.resource.data.<span class="fn">diff</span>(resource.data).<span class="fn">affectedKeys</span>().<span class="fn">hasAny</span>(fields); }
+    <span class="kw">function</span> <span class="fn">onlyChanges</span>(fields) { <span class="kw">return</span> request.resource.data.<span class="fn">diff</span>(resource.data).<span class="fn">affectedKeys</span>().<span class="fn">hasOnly</span>(fields); }
+    <span class="kw">function</span> <span class="fn">validBoardFields</span>(d) {
+      <span class="kw">return</span> d.keys().<span class="fn">hasOnly</span>([<span class="st">'title'</span>, <span class="st">'color'</span>, <span class="st">'ownerId'</span>, <span class="st">'memberIds'</span>, <span class="st">'createdAt'</span>, <span class="st">'updatedAt'</span>])
+        &amp;&amp; d.title <span class="kw">is</span> string &amp;&amp; d.title.size() &gt;= 1 &amp;&amp; d.title.size() &lt;= 120
+        &amp;&amp; d.color <span class="kw">is</span> string &amp;&amp; d.color.size() &lt;= 16
+        &amp;&amp; d.memberIds <span class="kw">is</span> list &amp;&amp; d.memberIds.size() &lt;= 50 &amp;&amp; d.ownerId <span class="kw">in</span> d.memberIds;
+    }
+
+    <span class="cm">// Users: prevent self-promotion (`isPro`, `role`, `boardCount` are Admin SDK only!)</span>
+    <span class="kw">match</span> /users/{userId} {
+      <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(userId);
+      <span class="kw">allow</span> <span class="kw">create</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(userId)
+        &amp;&amp; !request.resource.data.keys().<span class="fn">hasAny</span>([<span class="st">'isPro'</span>, <span class="st">'role'</span>, <span class="st">'boardCount'</span>]);
+      <span class="kw">allow</span> <span class="kw">update</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(userId)
+        &amp;&amp; <span class="fn">unchanged</span>([<span class="st">'id'</span>, <span class="st">'isPro'</span>, <span class="st">'role'</span>, <span class="st">'boardCount'</span>]);
+      <span class="kw">allow</span> <span class="kw">delete</span>: <span class="kw">if</span> <span class="kw">false</span>; <span class="cm">// Cleaned up by Cloud Function on Auth delete</span>
+    }
+
+    <span class="cm">// Public profiles: allow single-doc lookup (`get`), block full collection dump (`list`)</span>
+    <span class="kw">match</span> /publicProfiles/{userId} {
+      <span class="kw">allow</span> <span class="kw">get</span>: <span class="kw">if</span> <span class="fn">isSignedIn</span>();
+      <span class="kw">allow</span> <span class="kw">list</span>: <span class="kw">if</span> <span class="kw">false</span>;
+      <span class="kw">allow</span> <span class="kw">write</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(userId) &amp;&amp; request.resource.data.keys().<span class="fn">hasOnly</span>([<span class="st">'name'</span>, <span class="st">'photoUrl'</span>, <span class="st">'username'</span>]);
+    }
+
+    <span class="kw">match</span> /boards/{boardId} {
+      <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> <span class="fn">isMember</span>(resource.data);
+      <span class="kw">allow</span> <span class="kw">create</span>: <span class="kw">if</span> <span class="fn">isSignedIn</span>() &amp;&amp; request.resource.data.ownerId == request.auth.uid
+        &amp;&amp; request.resource.data.memberIds == [request.auth.uid] &amp;&amp; <span class="fn">validBoardFields</span>(request.resource.data);
+      <span class="kw">allow</span> <span class="kw">update</span>: <span class="kw">if</span> <span class="fn">isMember</span>(resource.data) &amp;&amp; <span class="fn">unchanged</span>([<span class="st">'ownerId'</span>, <span class="st">'createdAt'</span>])
+        &amp;&amp; (<span class="fn">isOwner</span>(resource.data.ownerId) || <span class="fn">unchanged</span>([<span class="st">'memberIds'</span>]))
+        &amp;&amp; <span class="fn">validBoardFields</span>(request.resource.data);
+      <span class="kw">allow</span> <span class="kw">delete</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(resource.data.ownerId);
+
+      <span class="kw">match</span> /cards/{cardId} {
+        <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> <span class="fn">isMember</span>(<span class="fn">get</span>(/databases/$(database)/documents/boards/$(boardId)).data);
+        <span class="kw">allow</span> <span class="kw">create</span>, <span class="kw">update</span>: <span class="kw">if</span> <span class="fn">isMember</span>(<span class="fn">get</span>(/databases/$(database)/documents/boards/$(boardId)).data)
+          &amp;&amp; request.resource.data.keys().<span class="fn">hasOnly</span>([<span class="st">'title'</span>, <span class="st">'description'</span>, <span class="st">'position'</span>, <span class="st">'assigneeId'</span>, <span class="st">'updatedAt'</span>, <span class="st">'createdAt'</span>])
+          &amp;&amp; request.resource.data.title <span class="kw">is</span> string &amp;&amp; request.resource.data.title.size() &lt;= 200;
+        <span class="kw">allow</span> <span class="kw">delete</span>: <span class="kw">if</span> <span class="fn">isMember</span>(<span class="fn">get</span>(/databases/$(database)/documents/boards/$(boardId)).data);
+      }
+    }
+
+    <span class="kw">match</span> /notifications/{notifId} {
+      <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(resource.data.userId);
+      <span class="kw">allow</span> <span class="kw">update</span>: <span class="kw">if</span> <span class="fn">isOwner</span>(resource.data.userId) &amp;&amp; <span class="fn">onlyChanges</span>([<span class="st">'isRead'</span>]);
+      <span class="kw">allow</span> <span class="kw">create</span>, <span class="kw">delete</span>: <span class="kw">if</span> <span class="kw">false</span>;
+    }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="fs-storage" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">RULES</span>
+        <span class="code-file">firebase/storage.rules (with firestore.exists guard)</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">rules_version</span> = <span class="st">'2'</span>;
+<span class="kw">service</span> firebase.storage {
+  <span class="kw">match</span> /b/{bucket}/o {
+    <span class="kw">function</span> <span class="fn">isBoardMember</span>(boardId) {
+      <span class="kw">return</span> request.auth != null
+        &amp;&amp; firestore.<span class="fn">exists</span>(/databases/(default)/documents/boards/$(boardId))
+        &amp;&amp; request.auth.uid <span class="kw">in</span> firestore.<span class="fn">get</span>(/databases/(default)/documents/boards/$(boardId)).data.memberIds;
+    }
+    <span class="kw">match</span> /boards/{boardId}/attachments/{fileName} {
+      <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> <span class="fn">isBoardMember</span>(boardId);
+      <span class="kw">allow</span> <span class="kw">create</span>, <span class="kw">update</span>: <span class="kw">if</span> <span class="fn">isBoardMember</span>(boardId) &amp;&amp; request.resource.size &lt; 10 * 1024 * 1024 &amp;&amp; request.resource.contentType.<span class="fn">matches</span>(<span class="st">'image/.*|application/pdf'</span>);
+      <span class="kw">allow</span> <span class="kw">delete</span>: <span class="kw">if</span> <span class="fn">isBoardMember</span>(boardId);
+    }
+    <span class="kw">match</span> /users/{userId}/avatar.jpg {
+      <span class="kw">allow</span> <span class="kw">read</span>: <span class="kw">if</span> request.auth != null;
+      <span class="kw">allow</span> <span class="kw">create</span>, <span class="kw">update</span>: <span class="kw">if</span> request.auth != null &amp;&amp; request.auth.uid == userId &amp;&amp; request.resource.size &lt; 5 * 1024 * 1024 &amp;&amp; request.resource.contentType.<span class="fn">matches</span>(<span class="st">'image/.*'</span>);
+      <span class="kw">allow</span> <span class="kw">delete</span>: <span class="kw">if</span> request.auth != null &amp;&amp; request.auth.uid == userId;
+    }
+    <span class="kw">match</span> /{allPaths=**} { <span class="kw">allow</span> <span class="kw">read</span>, <span class="kw">write</span>: <span class="kw">if</span> <span class="kw">false</span>; }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="fs-fn" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">TS</span>
+        <span class="code-file">firebase/functions/src/index.ts + notifications/onCardAssigned.ts</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> * <span class="kw">as</span> admin <span class="kw">from</span> <span class="st">'firebase-admin'</span>;
+<span class="kw">import</span> { onCall, HttpsError } <span class="kw">from</span> <span class="st">'firebase-functions/v2/https'</span>;
+<span class="kw">import</span> { onDocumentWritten } <span class="kw">from</span> <span class="st">'firebase-functions/v2/firestore'</span>;
+
+admin.<span class="fn">initializeApp</span>();
+
+<span class="kw">export const</span> deleteBoardRecursive = <span class="fn">onCall</span>({ enforceAppCheck: <span class="kw">true</span> }, <span class="kw">async</span> (req) =&gt; {
+  <span class="kw">const</span> uid = req.auth?.uid;
+  <span class="kw">const</span> boardId = req.data?.boardId <span class="kw">as</span> <span class="ty">string</span> | <span class="kw">undefined</span>;
+  <span class="kw">if</span> (!uid) <span class="kw">throw new</span> <span class="cls">HttpsError</span>(<span class="st">'unauthenticated'</span>, <span class="st">'Sign in required'</span>);
+  <span class="kw">if</span> (!boardId) <span class="kw">throw new</span> <span class="cls">HttpsError</span>(<span class="st">'invalid-argument'</span>, <span class="st">'boardId required'</span>);
+  <span class="kw">const</span> ref = admin.<span class="fn">firestore</span>().<span class="fn">collection</span>(<span class="st">'boards'</span>).<span class="fn">doc</span>(boardId);
+  <span class="kw">const</span> snap = <span class="kw">await</span> ref.<span class="fn">get</span>();
+  <span class="kw">if</span> (!snap.exists || snap.<span class="fn">data</span>()?.ownerId !== uid) <span class="kw">throw new</span> <span class="cls">HttpsError</span>(<span class="st">'permission-denied'</span>, <span class="st">'Owner only'</span>);
+  <span class="kw">await</span> admin.<span class="fn">firestore</span>().<span class="fn">recursiveDelete</span>(ref);
+  <span class="kw">return</span> { deleted: <span class="kw">true</span> };
+});
+
+<span class="kw">export const</span> onCardAssigned = <span class="fn">onDocumentWritten</span>(<span class="st">'boards/{boardId}/cards/{cardId}'</span>, <span class="kw">async</span> (event) =&gt; {
+  <span class="kw">const</span> before = event.data?.before.<span class="fn">data</span>();
+  <span class="kw">const</span> after = event.data?.after.<span class="fn">data</span>();
+  <span class="kw">if</span> (!after || !after.assigneeId || before?.assigneeId === after.assigneeId) <span class="kw">return</span> <span class="kw">null</span>;
+  <span class="kw">const</span> assigneeId = after.assigneeId <span class="kw">as</span> <span class="ty">string</span>;
+  <span class="kw">const</span> { boardId, cardId } = event.params;
+
+  <span class="kw">await</span> admin.<span class="fn">firestore</span>().<span class="fn">collection</span>(<span class="st">'notifications'</span>).<span class="fn">add</span>({
+    userId: assigneeId, title: <span class="st">'New card assigned to you'</span>, body: after.title ?? <span class="st">'New task'</span>,
+    data: { <span class="kw">type</span>: <span class="st">'card_assigned'</span>, id: cardId, boardId }, isRead: <span class="kw">false</span>, createdAt: admin.firestore.<span class="cls">FieldValue</span>.<span class="fn">serverTimestamp</span>(),
+  });
+
+  <span class="kw">const</span> userDoc = <span class="kw">await</span> admin.<span class="fn">firestore</span>().<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(assigneeId).<span class="fn">get</span>();
+  <span class="kw">const</span> tokens: <span class="ty">string</span>[] = userDoc.<span class="fn">data</span>()?.fcmTokens ?? [];
+  <span class="kw">if</span> (!tokens.length) <span class="kw">return</span> <span class="kw">null</span>;
+
+  <span class="kw">const</span> res = <span class="kw">await</span> admin.<span class="fn">messaging</span>().<span class="fn">sendEachForMulticast</span>({
+    tokens, notification: { title: <span class="st">'New card assigned to you'</span>, body: after.title ?? <span class="st">'New task'</span> },
+    data: { <span class="kw">type</span>: <span class="st">'card_assigned'</span>, id: cardId, boardId },
+    android: { priority: <span class="st">'high'</span>, notification: { channelId: <span class="st">'high_importance_channel'</span>, priority: <span class="st">'max'</span>, sound: <span class="st">'default'</span> } },
+    apns: { payload: { aps: { sound: <span class="st">'default'</span>, badge: 1, contentAvailable: <span class="kw">true</span> } } },
+  });
+
+  <span class="kw">const</span> stale = res.responses
+    .<span class="fn">map</span>((r, i) =&gt; ({ r, t: tokens[i] }))
+    .<span class="fn">filter</span>(({ r }) =&gt; !r.success &amp;&amp; [<span class="st">'messaging/registration-token-not-registered'</span>, <span class="st">'messaging/invalid-registration-token'</span>].<span class="fn">includes</span>(r.error?.code ?? <span class="st">''</span>))
+    .<span class="fn">map</span>(({ t }) =&gt; t);
+  <span class="kw">if</span> (stale.length) <span class="kw">await</span> userDoc.ref.<span class="fn">update</span>({ fcmTokens: admin.firestore.<span class="cls">FieldValue</span>.<span class="fn">arrayRemove</span>(...stale) });
+  <span class="kw">return</span> { sent: res.successCount, removed: stale.length };
+});</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ NOTIFICATIONS ═══════════════════ -->
+<div id="notifications" class="section">
+  <div class="hero">
+    <div class="hero-tag">Unified Notifications</div>
+    <h2>FCM Mobile + Web (VAPID) · Leak-Free Subscriptions · Safe Deep Links</h2>
+    <p>One clean <code>FcmService</code>, safe JSON payload parsing, Android channels, Web Service Worker, and <code>NotificationsBloc</code>.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'nt-fcm')">FcmService (Fixed)</button>
+    <button class="tab" onclick="switchTab(this,'nt-local')">Channels + Local + Navigator</button>
+    <button class="tab" onclick="switchTab(this,'nt-web')">Web Service Worker + App</button>
+    <button class="tab" onclick="switchTab(this,'nt-bloc')">NotificationsBloc</button>
+  </div>
+
+  <div id="nt-fcm" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">core/notifications/fcm_service.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>@lazySingleton
+<span class="kw">class</span> <span class="cls">FcmService</span> {
+  <span class="cls">FcmService</span>(<span class="kw">this</span>._messaging, <span class="kw">this</span>._firestore, <span class="kw">this</span>._local);
+  <span class="kw">final</span> <span class="cls">FirebaseMessaging</span> _messaging;
+  <span class="kw">final</span> <span class="cls">FirebaseFirestore</span> _firestore;
+  <span class="kw">final</span> <span class="cls">LocalNotificationService</span> _local;
+
+  <span class="cls">StreamSubscription</span>&lt;<span class="ty">String</span>&gt;? _tokenSub;
+  <span class="cls">StreamSubscription</span>&lt;<span class="cls">RemoteMessage</span>&gt;? _fgSub, _tapSub;
+  <span class="ty">String</span>? _activeUserId;
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">initialize</span>(<span class="ty">String</span> userId) <span class="kw">async</span> {
+    <span class="kw">if</span> (_activeUserId == userId) <span class="kw">return</span>;
+    <span class="fn">dispose</span>();
+    _activeUserId = userId;
+
+    <span class="kw">if</span> (!kIsWeb) <span class="kw">await</span> _local.<span class="fn">init</span>();
+    <span class="kw">final</span> settings = <span class="kw">await</span> _messaging.<span class="fn">requestPermission</span>(provisional: <span class="kw">true</span>);
+    <span class="cls">AppLogger</span>.<span class="fn">info</span>(<span class="st">'FCM permission: ${settings.authorizationStatus}'</span>, tag: <span class="st">'FCM'</span>);
+    <span class="kw">if</span> (settings.authorizationStatus == <span class="cls">AuthorizationStatus</span>.denied) {
+      <span class="kw">await</span> _firestore.<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(userId).<span class="fn">set</span>({<span class="st">'notificationsEnabled'</span>: <span class="kw">false</span>}, <span class="cls">SetOptions</span>(merge: <span class="kw">true</span>));
+      <span class="kw">return</span>;
+    }
+
+    <span class="kw">final</span> token = <span class="kw">await</span> _messaging.<span class="fn">getToken</span>(vapidKey: kIsWeb ? <span class="cls">AppConfig</span>.instance.webVapidKey : <span class="kw">null</span>);
+    <span class="kw">if</span> (token != <span class="kw">null</span>) <span class="kw">await</span> <span class="fn">_saveToken</span>(userId, token);
+
+    _tokenSub = _messaging.onTokenRefresh.<span class="fn">listen</span>((t) =&gt; <span class="fn">_saveToken</span>(userId, t));
+    _fgSub = <span class="cls">FirebaseMessaging</span>.onMessage.<span class="fn">listen</span>(_handleForeground);
+    _tapSub = <span class="cls">FirebaseMessaging</span>.onMessageOpenedApp.<span class="fn">listen</span>((m) =&gt; <span class="cls">NotificationNavigator</span>.<span class="fn">navigate</span>(m.data));
+  }
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_handleForeground</span>(<span class="cls">RemoteMessage</span> m) <span class="kw">async</span> {
+    <span class="kw">final</span> n = m.notification;
+    <span class="kw">if</span> (n == <span class="kw">null</span> || kIsWeb) <span class="kw">return</span>;
+    <span class="kw">await</span> _local.<span class="fn">show</span>(id: m.hashCode, title: n.title ?? <span class="st">''</span>, body: n.body ?? <span class="st">''</span>, payload: <span class="fn">jsonEncode</span>(m.data), highPriority: m.data[<span class="st">'priority'</span>] == <span class="st">'high'</span>);
+    <span class="kw">if</span> (<span class="kw">await</span> <span class="cls">AppBadgePlus</span>.<span class="fn">isSupported</span>()) {
+      <span class="kw">await</span> <span class="cls">AppBadgePlus</span>.<span class="fn">updateBadge</span>((<span class="kw">await</span> <span class="cls">AppBadgePlus</span>.<span class="fn">getBadgeCount</span>()) + <span class="nu">1</span>);
+    }
+  }
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_saveToken</span>(<span class="ty">String</span> uid, <span class="ty">String</span> token) =&gt; _firestore.<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(uid).<span class="fn">set</span>({
+        <span class="st">'fcmTokens'</span>: <span class="cls">FieldValue</span>.<span class="fn">arrayUnion</span>([token]), <span class="st">'notificationsEnabled'</span>: <span class="kw">true</span>, <span class="st">'lastTokenUpdatedAt'</span>: <span class="cls">FieldValue</span>.<span class="fn">serverTimestamp</span>(),
+      }, <span class="cls">SetOptions</span>(merge: <span class="kw">true</span>));
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">removeToken</span>(<span class="ty">String</span> uid) <span class="kw">async</span> {
+    <span class="kw">final</span> t = <span class="kw">await</span> _messaging.<span class="fn">getToken</span>();
+    <span class="kw">if</span> (t == <span class="kw">null</span>) <span class="kw">return</span>;
+    <span class="kw">await</span> _firestore.<span class="fn">collection</span>(<span class="st">'users'</span>).<span class="fn">doc</span>(uid).<span class="fn">update</span>({<span class="st">'fcmTokens'</span>: <span class="cls">FieldValue</span>.<span class="fn">arrayRemove</span>([t])});
+    <span class="kw">await</span> _messaging.<span class="fn">deleteToken</span>();
+  }
+
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">clearBadge</span>() <span class="kw">async</span> { <span class="kw">if</span> (!kIsWeb &amp;&amp; <span class="kw">await</span> <span class="cls">AppBadgePlus</span>.<span class="fn">isSupported</span>()) <span class="kw">await</span> <span class="cls">AppBadgePlus</span>.<span class="fn">updateBadge</span>(<span class="nu">0</span>); }
+
+  <span class="kw">void</span> <span class="fn">dispose</span>() {
+    <span class="fn">unawaited</span>(_tokenSub?.<span class="fn">cancel</span>()); <span class="fn">unawaited</span>(_fgSub?.<span class="fn">cancel</span>()); <span class="fn">unawaited</span>(_tapSub?.<span class="fn">cancel</span>());
+    _tokenSub = _fgSub = _tapSub = <span class="kw">null</span>; _activeUserId = <span class="kw">null</span>;
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="nt-local" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">local_notification_service.dart + notification_navigator.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">void</span> <span class="fn">_onTap</span>(<span class="cls">NotificationResponse</span> response) {
+  <span class="kw">if</span> (response.payload == <span class="kw">null</span>) <span class="kw">return</span>;
+  <span class="cls">NotificationNavigator</span>.<span class="fn">navigateFromPayload</span>(response.payload!);
+}
+
+<span class="kw">abstract final class</span> <span class="cls">NotificationNavigator</span> {
+  <span class="kw">static void</span> <span class="fn">navigateFromPayload</span>(<span class="ty">String</span> payload) {
+    <span class="kw">try</span> {
+      <span class="kw">final</span> decoded = <span class="fn">jsonDecode</span>(payload);
+      <span class="kw">if</span> (decoded <span class="kw">is</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;) <span class="fn">navigate</span>(decoded);
+    } <span class="kw">catch</span> (e, s) {
+      <span class="cls">AppLogger</span>.<span class="fn">error</span>(<span class="st">'Invalid notification payload'</span>, error: e, stack: s);
+    }
+  }
+  <span class="kw">static void</span> <span class="fn">navigate</span>(<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt; data) {
+    <span class="kw">final</span> type = data[<span class="st">'type'</span>] <span class="kw">as</span> <span class="ty">String</span>?, id = data[<span class="st">'id'</span>] <span class="kw">as</span> <span class="ty">String</span>?, boardId = data[<span class="st">'boardId'</span>] <span class="kw">as</span> <span class="ty">String</span>?;
+    <span class="kw">switch</span> (type) {
+      <span class="kw">case</span> <span class="st">'board_invite'</span>: <span class="kw">if</span> (id != <span class="kw">null</span>) <span class="cls">AppNavigator</span>.<span class="fn">go</span>(<span class="cls">RouteNames</span>.<span class="fn">boardPath</span>(id));
+      <span class="kw">case</span> <span class="st">'card_assigned'</span> || <span class="st">'comment_added'</span>: <span class="kw">if</span> (boardId != <span class="kw">null</span>) <span class="cls">AppNavigator</span>.<span class="fn">go</span>(<span class="cls">RouteNames</span>.<span class="fn">boardPath</span>(boardId));
+      <span class="kw">default</span>: <span class="cls">AppNavigator</span>.<span class="fn">go</span>(<span class="cls">RouteNames</span>.notifications);
+    }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div id="nt-web" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">JS + DART</span>
+        <span class="code-file">web/firebase-messaging-sw.js + core/notifications/fcm_background.dart</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm">// web/firebase-messaging-sw.js</span>
+<span class="fn">importScripts</span>(<span class="st">'https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js'</span>);
+<span class="fn">importScripts</span>(<span class="st">'https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js'</span>);
+firebase.<span class="fn">initializeApp</span>({ apiKey: <span class="st">'...'</span>, projectId: <span class="st">'...'</span>, messagingSenderId: <span class="st">'...'</span>, appId: <span class="st">'...'</span> });
+firebase.<span class="fn">messaging</span>().<span class="fn">onBackgroundMessage</span>((p) =&gt; {
+  <span class="kw">if</span> (p.notification?.title) self.registration.<span class="fn">showNotification</span>(p.notification.title, { body: p.notification.body, data: p.data });
+});
+
+<span class="cm">// core/notifications/fcm_background.dart</span>
+@<span class="fn">pragma</span>(<span class="st">'vm:entry-point'</span>)
+<span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">firebaseMessagingBackgroundHandler</span>(<span class="cls">RemoteMessage</span> message) <span class="kw">async</span> {
+  <span class="fn">debugPrint</span>(<span class="st">'BG message: ${message.messageId}'</span>);
+}</pre>
+    </div>
+  </div>
+
+  <div id="nt-bloc" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">DART</span>
+        <span class="code-file">Unread badge with buildWhen</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cls">BlocBuilder</span>&lt;<span class="cls">NotificationsBloc</span>, <span class="cls">NotificationsState</span>&gt;(
+  buildWhen: (p, c) =&gt; p.unreadCount != c.unreadCount,
+  builder: (_, s) =&gt; <span class="cls">Badge</span>(
+    isLabelVisible: s.unreadCount &gt; <span class="nu">0</span>,
+    label: <span class="cls">Text</span>(s.unreadCount &gt; <span class="nu">99</span> ? <span class="st">'99+'</span> : <span class="st">'${s.unreadCount}'</span>),
+    child: <span class="kw">const</span> <span class="cls">Icon</span>(<span class="cls">Icons</span>.notifications_outlined),
+  ),
+);</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ OFFLINE-FIRST ═══════════════════ -->
+<div id="offline" class="section">
+  <div class="hero">
+    <div class="hero-tag">Offline-First</div>
+    <h2>Persistence · NetworkInfo · Fractional Positioning · Sign-Out Wipe</h2>
+    <p>Firestore caches reads and queues writes automatically. Never block normal CRUD on <code>NetworkInfo</code>.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">core/firebase/firestore_setup.dart + core/network/network_info.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="kw">void</span> <span class="fn">configureFirestore</span>() {
+  <span class="cls">FirebaseFirestore</span>.instance.settings = <span class="kw">const</span> <span class="cls">Settings</span>(persistenceEnabled: <span class="kw">true</span>, cacheSizeBytes: <span class="nu">100</span> * <span class="nu">1024</span> * <span class="nu">1024</span>);
+}
+
+<span class="ty">double</span> <span class="fn">positionBetween</span>(<span class="ty">double</span>? before, <span class="ty">double</span>? after) {
+  <span class="kw">if</span> (before == <span class="kw">null</span> &amp;&amp; after == <span class="kw">null</span>) <span class="kw">return</span> <span class="nu">1000</span>;
+  <span class="kw">if</span> (before == <span class="kw">null</span>) <span class="kw">return</span> after! - <span class="nu">1000</span>;
+  <span class="kw">if</span> (after == <span class="kw">null</span>) <span class="kw">return</span> before + <span class="nu">1000</span>;
+  <span class="kw">return</span> (before + after) / <span class="nu">2</span>;
+}
+
+<span class="cm">// On Sign-Out:</span>
+<span class="kw">await</span> _auth.<span class="fn">signOut</span>();
+<span class="kw">await</span> <span class="cls">FirebaseFirestore</span>.instance.<span class="fn">terminate</span>();
+<span class="kw">await</span> <span class="cls">FirebaseFirestore</span>.instance.<span class="fn">clearPersistence</span>();</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ FLAVORS + APP CHECK ═══════════════════ -->
+<div id="flavors" class="section">
+  <div class="hero">
+    <div class="hero-tag">Flavors &amp; Security</div>
+    <h2>AppConfig · Single bootstrap() · Firebase App Check</h2>
+    <p>Isolated <code>dev</code> / <code>staging</code> / <code>prod</code> projects, App Check activated per flavor, and unified startup order.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">core/firebase/app_check_setup.dart + lib/bootstrap.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">activateAppCheck</span>() =&gt; <span class="cls">FirebaseAppCheck</span>.instance.<span class="fn">activate</span>(
+      androidProvider: <span class="cls">AppConfig</span>.instance.isDev ? <span class="cls">AndroidProvider</span>.debug : <span class="cls">AndroidProvider</span>.playIntegrity,
+      appleProvider: <span class="cls">AppConfig</span>.instance.isDev ? <span class="cls">AppleProvider</span>.debug : <span class="cls">AppleProvider</span>.appAttest,
+      webProvider: <span class="cls">ReCaptchaEnterpriseProvider</span>(<span class="cls">AppConfig</span>.instance.recaptchaSiteKey),
+    );
+
+<span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">bootstrap</span>() <span class="kw">async</span> {
+  <span class="cls">WidgetsFlutterBinding</span>.<span class="fn">ensureInitialized</span>();
+  <span class="kw">await</span> <span class="cls">Firebase</span>.<span class="fn">initializeApp</span>(options: <span class="cls">AppConfig</span>.instance.firebaseOptions);
+  <span class="kw">await</span> <span class="fn">activateAppCheck</span>();
+
+  <span class="kw">final</span> <span class="cls">ErrorReporter</span> reporter = kIsWeb ? <span class="cls">WebErrorReporter</span>() : <span class="cls">CrashlyticsErrorReporter</span>();
+  sl.<span class="fn">registerSingleton</span>&lt;<span class="cls">ErrorReporter</span>&gt;(reporter);
+  <span class="kw">await</span> <span class="fn">installGlobalErrorHandlers</span>(reporter);
+
+  <span class="fn">configureFirestore</span>();
+  <span class="kw">await</span> <span class="fn">configureDependencies</span>();
+  <span class="kw">await</span> sl&lt;<span class="cls">RemoteConfigService</span>&gt;().<span class="fn">init</span>();
+  <span class="kw">await</span> sl&lt;<span class="cls">PerfService</span>&gt;().<span class="fn">init</span>();
+
+  <span class="cls">FirebaseMessaging</span>.<span class="fn">onBackgroundMessage</span>(firebaseMessagingBackgroundHandler);
+  <span class="kw">await</span> <span class="cls">FirebaseMessaging</span>.instance.<span class="fn">setForegroundNotificationPresentationOptions</span>(alert: <span class="kw">true</span>, badge: <span class="kw">true</span>, sound: <span class="kw">true</span>);
+
+  <span class="cls">Bloc</span>.observer = <span class="cls">AppBlocObserver</span>();
+  sl&lt;<span class="cls">AuthBloc</span>&gt;().<span class="fn">add</span>(<span class="kw">const</span> <span class="cls">AuthWatchStarted</span>());
+  <span class="fn">runApp</span>(<span class="kw">const</span> <span class="cls">App</span>());
+}</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ PERFORMANCE ═══════════════════ -->
+<div id="perf" class="section">
+  <div class="hero">
+    <div class="hero-tag">Performance</div>
+    <h2>PerfService · Dio HttpMetric · Flutter Rendering Discipline</h2>
+    <p>Measures production user latency without blocking startup or leaking PII into trace attributes.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">core/performance/perf_service.dart + core/network/perf_interceptor.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre>@lazySingleton
+<span class="kw">class</span> <span class="cls">PerfService</span> {
+  <span class="cls">PerfService</span>(<span class="kw">this</span>._perf);
+  <span class="kw">final</span> <span class="cls">FirebasePerformance</span> _perf;
+  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">init</span>() =&gt; _perf.<span class="fn">setPerformanceCollectionEnabled</span>(<span class="cls">AppConfig</span>.instance.isProd);
+
+  <span class="ty">Future</span>&lt;<span class="cls">T</span>&gt; trace&lt;<span class="cls">T</span>&gt;(<span class="ty">String</span> name, <span class="ty">Future</span>&lt;<span class="cls">T</span>&gt; <span class="cls">Function</span>() op, {<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">String</span>&gt; attributes = <span class="kw">const</span> {}}) <span class="kw">async</span> {
+    <span class="kw">final</span> t = _perf.<span class="fn">newTrace</span>(name);
+    attributes.<span class="fn">forEach</span>(t.putAttribute);
+    <span class="kw">await</span> t.<span class="fn">start</span>();
+    <span class="kw">try</span> {
+      <span class="kw">final</span> r = <span class="kw">await</span> <span class="fn">op</span>(); t.<span class="fn">putAttribute</span>(<span class="st">'result'</span>, <span class="st">'ok'</span>); <span class="kw">return</span> r;
+    } <span class="kw">catch</span> (_) {
+      t.<span class="fn">putAttribute</span>(<span class="st">'result'</span>, <span class="st">'error'</span>); <span class="kw">rethrow</span>;
+    } <span class="kw">finally</span> {
+      <span class="kw">await</span> t.<span class="fn">stop</span>();
+    }
+  }
+}</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ REMOTE CONFIG & A/B ═══════════════════ -->
+<div id="remoteconfig" class="section">
+  <div class="hero">
+    <div class="hero-tag">Remote Config &amp; A/B</div>
+    <h2>Feature Flags · Kill Switches · Version Gate</h2>
+    <p>Non-blocking startup activation, live updates for <code>ops_*</code> keys only, and server-side quota enforcement.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">core/remote_config/version_gate.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="ty">bool</span> <span class="fn">isBelowMinVersion</span>(<span class="ty">String</span> minSupported) {
+  <span class="kw">final</span> current = <span class="cls">Version</span>.<span class="fn">parse</span>(sl&lt;<span class="cls">PackageInfo</span>&gt;().version);
+  <span class="kw">return</span> current &lt; <span class="cls">Version</span>.<span class="fn">parse</span>(minSupported);
+}</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════ CI/CD + CRASHLYTICS SYMBOLS ═══════════════════ -->
+<div id="cicd" class="section">
+  <div class="hero">
+    <div class="hero-tag">CI/CD</div>
+    <h2>GitHub Actions · WIF · Store Releases · Crashlytics Symbol Upload</h2>
+    <p>Consistent <code>firebase/functions</code> &amp; <code>com.example.taskboard</code> IDs, plus automatic obfuscated Dart symbol uploads to Crashlytics.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(this,'ci-pr')">ci.yml + dependabot.yml</button>
+    <button class="tab" onclick="switchTab(this,'ci-fb')">deploy-web + deploy-firebase</button>
+    <button class="tab" onclick="switchTab(this,'ci-rel')">release-android + release-ios</button>
+  </div>
+
+  <div id="ci-pr" class="tab-content active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML</span>
+        <span class="code-file">.github/workflows/ci.yml</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>name: CI
+<span class="kw">on</span>: { push: { branches: [main] }, pull_request: {} }
+concurrency: { group: ci-${{ github.ref }}, cancel-<span class="kw">in</span>-progress: <span class="kw">true</span> }
+permissions: { contents: read }
+jobs:
+  flutter:
+    runs-<span class="kw">on</span>: ubuntu-latest
+    steps:
+      - uses: actions/checkout<span class="de">@v7</span>
+      - uses: subosito/flutter-action<span class="de">@v2</span>
+        <span class="kw">with</span>: { channel: stable, flutter-version-file: .fvmrc, cache: <span class="kw">true</span> }
+      - run: flutter pub <span class="kw">get</span> &amp;&amp; flutter gen-l10n &amp;&amp; dart run build_runner build --delete-conflicting-outputs
+      - run: dart format --output=none --<span class="kw">set</span>-exit-<span class="kw">if</span>-changed lib test
+      - run: flutter analyze &amp;&amp; flutter test --coverage
+      - run: flutter build web -t lib/main_dev.dart
+  functions:
+    runs-<span class="kw">on</span>: ubuntu-latest
+    defaults: { run: { working-directory: firebase/functions } }
+    steps:
+      - uses: actions/checkout<span class="de">@v7</span>
+      - uses: actions/setup-node<span class="de">@v7</span>
+        <span class="kw">with</span>: { node-version: <span class="nu">22</span>, cache: npm, cache-dependency-path: firebase/functions/package-lock.json }
+      - run: npm ci &amp;&amp; npm run build</pre>
+    </div>
+  </div>
+
+  <div id="ci-fb" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML</span>
+        <span class="code-file">.github/workflows/deploy-firebase.yml (WIF)</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>name: Deploy Firebase Backend
+<span class="kw">on</span>: { push: { branches: [main], paths: [<span class="st">"firebase/**"</span>, <span class="st">"firebase.json"</span>] } }
+permissions: { contents: read, id-token: write }
+jobs:
+  deploy:
+    runs-<span class="kw">on</span>: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout<span class="de">@v7</span>
+      - uses: actions/setup-node<span class="de">@v7</span>
+        <span class="kw">with</span>: { node-version: <span class="nu">22</span>, cache: npm, cache-dependency-path: firebase/functions/package-lock.json }
+      - run: npm ci &amp;&amp; npm run build
+        working-directory: firebase/functions
+      - uses: google-github-actions/auth<span class="de">@v3</span>
+        <span class="kw">with</span>: { workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}, service_account: ${{ vars.GCP_DEPLOY_SA }} }
+      - run: npx firebase-tools<span class="de">@latest</span> deploy --only firestore,storage,functions --project your-project-id --force --non-interactive</pre>
+    </div>
+  </div>
+
+  <div id="ci-rel" class="tab-content">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-lang">YAML</span>
+        <span class="code-file">Android + iOS Release with Crashlytics Symbol Upload</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># Android: build AAB + upload Dart symbols to Crashlytics + upload AAB to Play</span>
+      - run: |
+          flutter build appbundle --release --flavor prod -t lib/main_prod.dart \
+            --build-name <span class="st">"${GITHUB_REF_NAME#v}"</span> --build-number <span class="st">"${{ github.run_number }}"</span> \
+            --obfuscate --split-debug-info=build/symbols
+      - <span class="kw">if</span>: vars.FIREBASE_ANDROID_APP_ID != <span class="st">''</span>
+        run: npx firebase-tools<span class="de">@latest</span> crashlytics:symbols:upload --app=${{ vars.FIREBASE_ANDROID_APP_ID }} build/symbols
+      - uses: r0adkll/upload-google-play<span class="de">@v1</span>
+        <span class="kw">with</span>:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.example.taskboard
+          releaseFiles: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          tracks: internal
+          mappingFile: build/app/outputs/mapping/prodRelease/mapping.txt
+
+<span class="cm"># iOS: after xcodebuild exportArchive, upload dSYM + Dart split-debug-info to Crashlytics</span>
+      - <span class="kw">if</span>: vars.FIREBASE_IOS_APP_ID != <span class="st">''</span>
+        run: npx firebase-tools<span class="de">@latest</span> crashlytics:symbols:upload --app=${{ vars.FIREBASE_IOS_APP_ID }} build/symbols</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TESTING ═══════════════════ -->
+<div id="testing" class="section">
+  <div class="hero">
+    <div class="hero-tag">Testing</div>
+    <h2>Unit · BLoC · Widget (with l10n) · Emulator Integration</h2>
+    <p>Three isolated test layers plus Firebase Emulator end-to-end tests.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">DART</span>
+      <span class="code-file">test/widget/boards/home_page_test.dart</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="kw">await</span> tester.<span class="fn">pumpWidget</span>(
+  <span class="cls">BlocProvider</span>&lt;<span class="cls">BoardsBloc</span>&gt;.<span class="fn">value</span>(
+    value: mockBoardsBloc,
+    child: <span class="kw">const</span> <span class="cls">MaterialApp</span>(
+      localizationsDelegates: <span class="cls">AppLocalizations</span>.localizationsDelegates,
+      supportedLocales: <span class="cls">AppLocalizations</span>.supportedLocales,
+      home: <span class="cls">HomePage</span>(),
+    ),
+  ),
+);</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════ GOLDEN RULES ═══════════════════ -->
+<div id="rules" class="section">
+  <div class="hero">
+    <div class="hero-tag">Golden Rules</div>
+    <h2>The Complete Production Checklist</h2>
+    <p>Every item verified automatically or via PR review before release.</p>
+  </div>
+  <table class="rule-table">
+    <tr><th>Area</th><th>Rule</th></tr>
+    <tr><td>Architecture</td><td><code>domain/</code> never imports Flutter or Firebase; repositories always return <code>Either&lt;AppFailure, T&gt;</code></td></tr>
+    <tr><td>BLoC</td><td>Single state + enum + <code>copyWith</code> + sealed events + <code>emit.forEach</code></td></tr>
+    <tr><td>Offline</td><td>Never <code>await</code> Firestore CRUD writes; transactions belong in Cloud Functions; clear persistence on sign-out</td></tr>
+    <tr><td>Security</td><td>App Check enabled in <code>bootstrap()</code>; Rules check <code>firestore.exists()</code>; notifications created only by Cloud Functions</td></tr>
+    <tr><td>UI &amp; RTL</td><td>Zero hardcoded colors/strings; <code>EdgeInsetsDirectional</code> everywhere; <code>AuthStatus.unknown</code> splash guard</td></tr>
+    <tr><td>CI/CD</td><td><code>very_good_analysis</code> + tests + Web/Functions build on PR; obfuscated store builds upload Crashlytics symbols</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════ AI SKILL PACK ═══════════════════ -->
+<div id="aiskill" class="section">
+  <div class="hero">
+    <div class="hero-tag">AI Agent Skill Mode</div>
+    <h2>SKILL.md Ready to Drop Into Any AI Coding Agent</h2>
+    <p>Alongside this HTML blueprint, a standalone <code>SKILL.md</code> artifact was generated. Keep <code>SKILL.md</code> concise (~200 lines) and store deep code references in <code>references/*.md</code>.</p>
+  </div>
+  <div class="box box-tip">
+    <strong>Pro Skill Architecture:</strong> Use <code>SKILL.md</code> for rules, decision matrix, bootstrap order, anti-patterns, and verification commands — and split long code samples into <code>references/</code> so the AI agent loads only what each task needs.
+  </div>
+</div>
+
+</main>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function switchTab(btn, id) {
+  const bar = btn.closest('.tab-bar');
+  bar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  let el = bar.nextElementSibling;
+  while (el) {
+    if (el.classList && el.classList.contains('tab-content')) el.classList.remove('active');
+    el = el.nextElementSibling;
+  }
+  document.getElementById(id).classList.add('active');
+}
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+</body>
+</html>
