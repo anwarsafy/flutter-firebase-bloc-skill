@@ -6,10 +6,13 @@
 enum AppFlavor { dev, staging, prod }
 
 class AppConfig {
-  const AppConfig._(this.flavor, this.appName, this.firebaseOptions, this.webVapidKey, this.recaptchaSiteKey);
+  const AppConfig._(this.flavor, this.appName, this.firebaseOptions, this.webVapidKey, this.recaptchaSiteKey,
+      [this.googleServerClientId]);
   final AppFlavor flavor;
-  final String appName, webVapidKey, recaptchaSiteKey;
+  final String appName, webVapidKey, recaptchaSiteKey; // public identifiers, NOT secrets
   final FirebaseOptions firebaseOptions;
+  /// Web OAuth client ID for google_sign_in 7.x. Null on Android = read from google-services.json.
+  final String? googleServerClientId;
 
   static late final AppConfig instance;
 
@@ -37,7 +40,7 @@ Future<void> bootstrap() async {
   sl.registerSingleton<ErrorReporter>(reporter);
   await installGlobalErrorHandlers(reporter);
 
-  configureFirestore();
+  await configureFirestore(); // runs a pending sign-out cache wipe, then sets persistence
   await configureDependencies();
   await sl<RemoteConfigService>().init();
   await sl<PerfService>().init();
@@ -330,6 +333,17 @@ jobs:
       - run: flutter analyze
       - run: flutter test --coverage
       - run: flutter build web -t lib/main_dev.dart
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6 # Firestore emulator needs a JRE
+        with: { distribution: temurin, java-version: "21" }
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm, cache-dependency-path: firebase/tests/package-lock.json }
+      - run: npm ci --prefix firebase/tests
+      - run: npx firebase-tools@latest emulators:exec --only firestore --project demo-rules "npx --prefix firebase/tests vitest run firebase/tests"
   functions:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -341,6 +355,8 @@ jobs:
       - run: npm ci && npm run build
 
 # .github/workflows/deploy-web.yml
+# PR previews build the STAGING flavor and deploy to the STAGING Firebase project, so a preview
+# never reads or writes production data. Only pushes to main ship the prod build to prod.
 name: Deploy Web
 on:
   pull_request: {}
@@ -348,9 +364,14 @@ on:
 permissions: { contents: read, pull-requests: write, checks: write }
 jobs:
   hosting:
+    # Fork PRs get no secrets: skip them instead of failing.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'push' && 'production' || 'staging' }}
-    env: { SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }} }
+    environment: ${{ github.event_name == 'push' && 'production' || 'staging' }} # each env has its own SA secret
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      TARGET: ${{ github.event_name == 'push' && 'lib/main_prod.dart' || 'lib/main_staging.dart' }}
+      PROJECT: ${{ github.event_name == 'push' && 'your-prod-project-id' || 'your-staging-project-id' }}
     steps:
       - if: env.SA == ''
         run: echo "::notice::FIREBASE_SERVICE_ACCOUNT not set — skipping"
@@ -360,13 +381,13 @@ jobs:
         if: env.SA != ''
         with: { channel: stable, flutter-version-file: .fvmrc, cache: true }
       - if: env.SA != ''
-        run: flutter pub get && flutter gen-l10n && dart run build_runner build --delete-conflicting-outputs && flutter build web --release -t lib/main_prod.dart
+        run: flutter pub get && flutter gen-l10n && dart run build_runner build --delete-conflicting-outputs && flutter build web --release -t "$TARGET"
       - uses: FirebaseExtended/action-hosting-deploy@v0
         if: env.SA != ''
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: your-project-id
+          projectId: ${{ env.PROJECT }}
           channelId: ${{ github.event_name == 'push' && 'live' || '' }}
           expires: 14d
 
@@ -399,7 +420,7 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: "21" }
       - uses: subosito/flutter-action@v2
         with: { channel: stable, flutter-version-file: .fvmrc, cache: true }
@@ -465,7 +486,7 @@ jobs:
 ### Required GitHub Environment Secrets & Variables (`production` / `staging`)
 | Secret / Variable | Used By | Creation |
 |---|---|---|
-| `FIREBASE_SERVICE_ACCOUNT` (secret) | `deploy-web.yml` | `firebase init hosting:github` or Firebase Hosting Admin SA JSON |
+| `FIREBASE_SERVICE_ACCOUNT` (secret, **per environment**) | `deploy-web.yml` | `production` env → prod project SA, `staging` env → staging project SA (`firebase init hosting:github`) |
 | `GCP_WIF_PROVIDER`, `GCP_DEPLOY_SA` (vars) | `deploy-firebase.yml` | GCP Workload Identity Federation bound to this GitHub repo (keyless) |
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | `release-android.yml` | `keytool` + `base64` |
 | `PLAY_SERVICE_ACCOUNT_JSON` (secret) | `release-android.yml` | Play Console Release Manager service account |
@@ -514,6 +535,38 @@ blocTest<BoardsBloc, BoardsState>(
     const BoardsState(status: BoardsStatus.loading),
     BoardsState(status: BoardsStatus.success, boards: [tBoardEntity]),
   ],
+);
+
+blocTest<BoardsBloc, BoardsState>(
+  'keeps existing boards and exposes the failure when the stream fails',
+  build: () {
+    when(() => mockWatchBoards(any())).thenAnswer(
+      (_) => Stream<Either<AppFailure, List<BoardEntity>>>.fromIterable(
+        [Right([tBoardEntity]), const Left(PermissionFailure())],
+      ),
+    );
+    return BoardsBloc(mockWatchBoards, mockCreateBoard, mockDeleteBoard);
+  },
+  act: (b) => b.add(const WatchBoardsStarted('user-1')),
+  expect: () => [
+    const BoardsState(status: BoardsStatus.loading),
+    BoardsState(status: BoardsStatus.success, boards: [tBoardEntity]),
+    BoardsState(status: BoardsStatus.failure, boards: [tBoardEntity], failure: const PermissionFailure()),
+  ],
+);
+
+blocTest<BoardsBloc, BoardsState>(
+  'refresh re-subscribes exactly once (restartable)',
+  build: () {
+    when(() => mockWatchBoards(any())).thenAnswer((_) => Stream.value(Right([tBoardEntity])));
+    return BoardsBloc(mockWatchBoards, mockCreateBoard, mockDeleteBoard);
+  },
+  act: (b) async {
+    b.add(const WatchBoardsStarted('user-1'));
+    await Future<void>.delayed(Duration.zero);
+    b.add(const BoardsRefreshed());
+  },
+  verify: (_) => verify(() => mockWatchBoards('user-1')).called(2),
 );
 
 // test/widget/boards/home_page_test.dart

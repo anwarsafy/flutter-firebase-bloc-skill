@@ -1,6 +1,6 @@
 {
   "name": "flutter-firebase-bloc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Production Flutter + Firebase + BLoC skill enforcing Clean Architecture, offline-first writes, single-state BLoC, hardened security rules, App Check, RTL l10n, flavors, and CI/CD.",
   "author": {
     "name": "anwarsafy"

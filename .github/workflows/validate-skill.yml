@@ -12,8 +12,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Validate skill structure, manifests, and templates
@@ -59,5 +59,28 @@ jobs:
               ar_keys = {k for k in json.load(f) if not k.startswith("@")}
           assert en_keys == ar_keys, f"ARB key mismatch: {en_keys ^ ar_keys}"
 
+          # SKILL.md `name` must match its folder (Agent Skills spec; `npx skills` relies on it).
+          m = re.search(r"^name:\s*(\S+)", text, re.M)
+          assert m and m.group(1) == os.path.basename(root), "SKILL.md name must match folder name"
+
+          # Every AppLocalizations key used in the references exists in the ARB templates.
+          used = set()
+          for ref in expected_refs:
+              with open(os.path.join(root, "references", ref), encoding="utf-8") as f:
+                  used |= set(re.findall(r"\b(?:l|AppLocalizations\.of\([a-zA-Z]+\))\.([a-z][A-Za-z0-9]+)\b", f.read()))
+          assert used <= en_keys, f"ARB keys missing: {sorted(used - en_keys)}"
+
+          # Plugin and marketplace versions stay in sync.
+          with open(".claude-plugin/plugin.json") as f:
+              pv = json.load(f)["version"]
+          with open(".claude-plugin/marketplace.json") as f:
+              mv = {p["version"] for p in json.load(f)["plugins"]}
+          assert mv == {pv}, f"Version mismatch: plugin {pv} vs marketplace {mv}"
+
           print("All skill validation checks passed!")
           EOF
+      - name: Interactive blueprint is generated from the current skill
+        run: |
+          pip install markdown==3.11 pygments==2.21.0
+          python3 scripts/build_blueprint.py
+          git diff --exit-code docs/ || (echo "::error::Run python3 scripts/build_blueprint.py and commit docs/" && exit 1)

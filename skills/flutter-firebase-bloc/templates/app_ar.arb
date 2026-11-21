@@ -11,5 +11,11 @@
   "authEmailInUse": "يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل.",
   "authWeakPassword": "يرجى اختيار كلمة مرور أقوى.",
   "authTooManyRequests": "تم إجراء محاولات كثيرة جداً. يرجى المحاولة لاحقاً.",
-  "authUserDisabled": "تم تعطيل هذا الحساب."
+  "authUserDisabled": "تم تعطيل هذا الحساب.",
+  "authRequiresRecentLogin": "لحماية حسابك، يرجى تسجيل الدخول مرة أخرى للمتابعة.",
+  "errorWriteRejected": "تعذّر حفظ آخر تعديل وتم التراجع عنه.",
+  "validationRequired": "هذا الحقل مطلوب.",
+  "validationTooLong": "النص طويل جداً.",
+  "validationInvalidEmail": "يرجى إدخال بريد إلكتروني صحيح.",
+  "validationInvalidPhone": "يرجى إدخال رقم هاتف صحيح."
 }
