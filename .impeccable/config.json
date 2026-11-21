@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-11-21T04:30:36.786Z",
+        "reason": "Agent: the detector composites the ember glow onto white as #ffe7dd. The page background is #08080a, and the ink, ember, and muted colors clear 4.5:1 on that black."
+      }
+    ]
+  }
+}

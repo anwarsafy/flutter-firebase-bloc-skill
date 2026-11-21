@@ -1,18 +1,23 @@
 <div align="center">
 
-# 🔥 Flutter + Firebase + BLoC — Production AI Skill
+**English** · [العربية](README.ar.md)
 
-**Turn any AI coding assistant into a Principal Flutter & Firebase Architect.**  
-Enforces Clean Architecture, Offline-First Firestore, Single-State BLoC, Hardened Anti-Hacking Rules, App Check, RTL Localization (EN/AR), Flavors, and Automated CI/CD — with **zero hallucinations**.
+# Flutter Firebase BLoC
 
-[![GitHub stars](https://img.shields.io/github/stars/anwarsafy/flutter-firebase-bloc-skill?style=for-the-badge&logo=github&color=6366f1)](https://github.com/anwarsafy/flutter-firebase-bloc-skill/stargazers)
-[![Validate Skill](https://img.shields.io/github/actions/workflow/status/anwarsafy/flutter-firebase-bloc-skill/validate-skill.yml?style=for-the-badge&label=Skill%20Validation)](https://github.com/anwarsafy/flutter-firebase-bloc-skill/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=for-the-badge)](LICENSE)
-[![Agent Skills](https://img.shields.io/badge/Agent_Skills-Standard-8b5cf6?style=for-the-badge)](https://skills.sh)
+### Ship production Flutter with agents, from the first screen down to Firestore rules.
 
-🌐 **[العربية (Arabic Guide)](README.ar.md)** · **[Interactive HTML Blueprint](https://anwarsafy.github.io/flutter-firebase-bloc-skill/)** · **[Install Guide](skills/flutter-firebase-bloc/INSTALL.md)**
+[![Skill check](https://img.shields.io/github/actions/workflow/status/anwarsafy/flutter-firebase-bloc-skill/validate-skill.yml?style=flat-square&label=skill%20check)](https://github.com/anwarsafy/flutter-firebase-bloc-skill/actions)
+[![License: MIT](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
+[![Agent skill](https://img.shields.io/badge/agent%20skill-standard-5c4ee5?style=flat-square)](https://skills.sh)
+
+**[Website](https://anwarsafy.github.io/flutter-firebase-bloc-skill/)** · **[Blueprint](https://anwarsafy.github.io/flutter-firebase-bloc-skill/Flutter_Firebase_BLoC_Blueprint_ULTIMATE.html)** · **[Install guide](skills/flutter-firebase-bloc/INSTALL.md)**
+
+<code>npx skills add anwarsafy/flutter-firebase-bloc-skill</code>
 
 </div>
+
+> [!IMPORTANT]
+> Install from [anwarsafy/flutter-firebase-bloc-skill](https://github.com/anwarsafy/flutter-firebase-bloc-skill) or the [website](https://anwarsafy.github.io/flutter-firebase-bloc-skill/). The skill makes Cursor, Claude Code, Copilot, and the rest hold one bar: Clean Architecture, single-state BLoC, offline-first Firestore, hardened rules, and CI.
 
 ---
 
