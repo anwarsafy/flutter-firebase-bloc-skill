@@ -11,6 +11,30 @@
         ],
         "createdAt": "2026-11-21T04:30:36.786Z",
         "reason": "Agent: the detector composites the ember glow onto white as #ffe7dd. The page background is #08080a, and the ink, ember, and muted colors clear 4.5:1 on that black."
+      },
+      {
+        "rule": "overused-font",
+        "value": "instrument serif",
+        "createdAt": "2026-11-21T04:31:55.738Z",
+        "reason": "Agent: chosen as the display face for this one page, paired with Outfit for UI."
+      },
+      {
+        "rule": "italic-serif-display",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-11-21T04:32:00.053Z",
+        "reason": "Agent: the italic second line is the display for this luxury page."
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-11-21T04:32:00.083Z",
+        "reason": "Agent: the kicker names Anwar and the skill, not a generic SaaS chip."
       }
     ]
   }
